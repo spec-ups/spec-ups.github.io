@@ -1,6 +1,5 @@
 /*
- * Bubble effects: the poppable background in the hero, and the
- * full-screen burst used by the easter egg.
+ * Bubble burst used by the easter egg (Konami code / logo clicks).
  */
 (function () {
   "use strict";
@@ -76,111 +75,6 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  /* ---------- Hero field ---------- */
-  function field(canvas, host, opts) {
-    opts = opts || {};
-    var ctx = canvas.getContext("2d");
-    var W = 0, H = 0, bubbles = [], pops = [], palette = readPalette();
-    var running = false, visible = true, raf = 0;
-
-    function spawn(anywhere) {
-      var r = 8 + Math.pow(Math.random(), 2) * 34;
-      return {
-        x: Math.random() * W,
-        y: anywhere ? Math.random() * H : H + r + Math.random() * 60,
-        r: r,
-        speed: 0.25 + Math.random() * 0.6 + (40 - r) * 0.008,
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.01 + Math.random() * 0.02,
-        tint: Math.floor(Math.random() * 3),
-        alpha: 0.6 + Math.random() * 0.4
-      };
-    }
-
-    function target() { return Math.max(10, Math.min(46, Math.round((W * H) / 22000))); }
-
-    function resize() {
-      var r = host.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      W = r.width; H = r.height;
-      sizeCanvas(canvas, ctx, W, H);
-      while (bubbles.length < target()) bubbles.push(spawn(true));
-      bubbles.length = Math.min(bubbles.length, target());
-      if (!running) drawFrame();
-    }
-
-    function pop(i) {
-      pops.push(makePop(bubbles[i]));
-      bubbles[i] = spawn(false);
-      if (opts.onPop) opts.onPop();
-      if (!running) drawFrame(); // reduced motion: no loop, so repaint once
-    }
-
-    function hitTest(x, y, pad) {
-      for (var i = bubbles.length - 1; i >= 0; i--) {
-        var b = bubbles[i], dx = b.x - x, dy = b.y - y;
-        if (dx * dx + dy * dy < (b.r + pad) * (b.r + pad)) pop(i);
-      }
-    }
-
-    function pointFrom(e) {
-      var r = canvas.getBoundingClientRect();
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
-    }
-
-    // Hover pops on mouse; taps pop on touch. Listening on the host means
-    // bubbles behind the headline still pop.
-    host.addEventListener("pointermove", function (e) {
-      if (e.pointerType !== "mouse") return;
-      var p = pointFrom(e);
-      hitTest(p.x, p.y, 0);
-    });
-    host.addEventListener("pointerdown", function (e) {
-      var p = pointFrom(e);
-      hitTest(p.x, p.y, 10);
-    });
-
-    function drawFrame() {
-      ctx.clearRect(0, 0, W, H);
-      bubbles.forEach(function (b) { drawBubble(ctx, b, palette); });
-      pops = pops.filter(function (p) { return drawPop(ctx, p, palette); });
-    }
-
-    function tick() {
-      bubbles.forEach(function (b, i) {
-        b.wobble += b.wobbleSpeed;
-        b.y -= b.speed;
-        b.x += Math.sin(b.wobble) * 0.35;
-        if (b.y < -b.r - 10) bubbles[i] = spawn(false);
-      });
-      drawFrame();
-      raf = requestAnimationFrame(tick);
-    }
-
-    function update() {
-      var should = visible && !document.hidden && !reduceMotion;
-      if (should && !running) { running = true; raf = requestAnimationFrame(tick); }
-      if (!should && running) { running = false; cancelAnimationFrame(raf); }
-    }
-
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (entries) {
-        visible = entries[0].isIntersecting;
-        update();
-      }).observe(host);
-    }
-    document.addEventListener("visibilitychange", update);
-    document.addEventListener("themechange", function () {
-      palette = readPalette();
-      if (!running) drawFrame();
-    });
-    if ("ResizeObserver" in window) new ResizeObserver(resize).observe(host);
-    else window.addEventListener("resize", resize);
-
-    resize();
-    update();
-  }
-
   /* ---------- Full-screen burst ---------- */
   function burst(originX, originY) {
     if (reduceMotion) return;
@@ -219,5 +113,5 @@
     })();
   }
 
-  window.LabBubbles = { field: field, burst: burst };
+  window.LabBubbles = { burst: burst };
 })();

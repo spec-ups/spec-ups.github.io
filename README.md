@@ -12,9 +12,9 @@ css/styles.css      styles + light/dark theme tokens
 js/config.js        site settings (chat endpoint)
 js/projects.js      your project list (edit this to add projects)
 js/main.js          shared: theme, cards, player pop-up, effects, chat
-js/home.js          home page: bubble hero, headline, stats, grid
+js/home.js          home page: headline, stats, grid
 js/project.js       project page rendering
-js/bubbles.js       bubble background + easter-egg burst
+js/bubbles.js       easter-egg bubble burst
 projects/           each self-contained project in its own folder
 worker/             optional "Ask the lab" chat backend (see worker/README.md)
 ```

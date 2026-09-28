@@ -1,27 +1,9 @@
-/* Home page: bubble hero, cycling headline, stats and the project grid. */
+/* Home page: cycling headline, stats and the project grid. */
 (function () {
   "use strict";
 
   var Lab = window.Lab;
   var projects = Lab.projects;
-
-  /* ---------- Bubble hero ---------- */
-  var poppedEl = document.getElementById("popped");
-  var popped = 0;
-  var popStat = poppedEl.parentNode;
-  var hint = document.querySelector(".hero-hint");
-
-  window.LabBubbles.field(document.getElementById("hero-bubbles"), document.getElementById("hero"), {
-    onPop: function () {
-      popped++;
-      poppedEl.textContent = popped;
-      popStat.classList.add("is-on");
-      if (hint) { hint.classList.add("is-gone"); hint = null; }
-      poppedEl.classList.remove("bump");
-      void poppedEl.offsetWidth; // restart the bump animation
-      poppedEl.classList.add("bump");
-    }
-  });
 
   /* ---------- Cycling headline ---------- */
   var WORDS = ["games", "apps", "experiments", "tiny tools", "weird ideas"];
