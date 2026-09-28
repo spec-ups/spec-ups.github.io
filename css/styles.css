@@ -239,26 +239,30 @@ img { max-width: 100%; display: block; }
   to   { transform: translate(-60px, 40px) scale(1.08); }
 }
 
-/* Rorschach inkblots, faded into the hero background (see js/inkblot.js) */
+/* Rorschach inkblots scattered down every page (see js/inkblot.js).
+   The layer spans the whole body, so the blots scroll with the content. */
+body { position: relative; }
 .inkblots {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
   color: var(--ink);
-  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 320px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 320px), transparent);
 }
 /* Drawn at half size and scaled up 2x: the ink filter re-runs every frame
    while animating, and a quarter of the pixels keeps that cheap. The soft
-   edges hide the lower resolution. */
-.inkblot { position: absolute; height: auto; opacity: var(--ink-opacity); will-change: transform; }
-.inkblot-a { width: min(310px, 35vw); top: 4%; right: -2%; transform: scale(2); transform-origin: top right; }
-.inkblot-b {
-  width: min(150px, 17vw); bottom: 6%; left: -4%;
-  transform: rotate(-8deg) scale(2); transform-origin: bottom left;
-  opacity: calc(var(--ink-opacity) * 0.7);
+   edges hide the lower resolution. Each blot sets its own --size, --tilt
+   and --fade. */
+.inkblot {
+  position: absolute; height: auto; will-change: transform;
+  width: calc(min(310px, 35vw) * var(--size, 1));
+  opacity: calc(var(--ink-opacity) * var(--fade, 1));
 }
+.inkblot-right { right: -2%; transform: rotate(var(--tilt, 0deg)) scale(2); transform-origin: top right; }
+.inkblot-left  { left: -4%;  transform: rotate(var(--tilt, 0deg)) scale(2); transform-origin: top left; }
 @media (max-width: 700px) {
-  .inkblot-a { width: 55vw; right: -30vw; top: 12%; }
-  .inkblot-b { display: none; }
+  .inkblot { width: calc(55vw * var(--size, 1)); }
+  .inkblot-right { right: -30vw; }
+  .inkblot-left  { left: -30vw; }
 }
 
 .hero-content { position: relative; z-index: 1; }

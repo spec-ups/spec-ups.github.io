@@ -1,7 +1,7 @@
 /*
- * Rorschach-style inkblots for the hero background.
+ * Rorschach-style inkblots for the site background.
  * Each blot is random blobs on one half, roughened with an SVG noise
- * filter, then mirrored — so every visit gets a new, symmetric blot.
+ * filter, then mirrored — so every visit gets new, symmetric blots.
  * The blobs drift slowly through the fixed noise field, so the ink
  * seeps and shifts while both halves stay mirrored.
  */
@@ -146,52 +146,98 @@
 
   function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
 
+  // Blots are scattered down the whole page, one every GAP pixels on
+  // alternating sides, and more are added as the page grows. The seed and
+  // elapsed time are kept for the session, so moving between pages carries
+  // on with the same blots mid-drift instead of spreading in new ones.
+  var KEY = "inkblots";
+  var GAP = 640;
+
+  function load() {
+    try {
+      var s = JSON.parse(sessionStorage.getItem(KEY));
+      if (s && typeof s.seed === "number" && typeof s.t === "number") return s;
+    } catch (e) {}
+    return null;
+  }
+
   document.querySelectorAll("[data-inkblots]").forEach(function (host) {
-    var blots = ["inkblot inkblot-a", "inkblot inkblot-b"].map(function (cls) {
-      var blot = inkblot(Math.floor(Math.random() * 1e9));
-      blot.svg.setAttribute("class", cls);
-      blot.svg.setAttribute("aria-hidden", "true");
-      blot.svg.setAttribute("focusable", "false");
-      host.appendChild(blot.svg);
-      return blot;
-    });
+    var saved = load();
+    var seed = saved ? saved.seed : Math.floor(Math.random() * 1e9);
+    var t = saved ? saved.t : 0;
+    var blots = [], onScreen = [];
+    var io = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { e.target.inkblot.visible = e.isIntersecting; });
+      onScreen = blots.filter(function (b) { return b.visible; });
+    }, { rootMargin: "200px 0px" }) : null;
 
-    if (reduceMotion) return; // stay as a still blot
+    function pose(time, list) {
+      var grow = easeOut(Math.min(1, time / SPREAD));
+      list.forEach(function (b) { b.draw(time, grow); });
+    }
 
-    var start = performance.now(), last = 0, raf = 0, running = false, visible = true;
-    var paused = 0, pausedAt = 0;
+    // Blot i always gets the same shape and spot, whichever page it's on
+    function add(i) {
+      var rand = rng(seed + i * 7919);
+      var blot = inkblot(Math.floor(rand() * 1e9));
+      var side = i % 2 ? "left" : "right";
+      var svg = blot.svg;
+      svg.setAttribute("class", "inkblot inkblot-" + side);
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("focusable", "false");
+      svg.style.top = Math.round(i * GAP + (i ? rand() * GAP * 0.4 : 24)) + "px";
+      svg.style.setProperty("--size", (0.55 + rand() * 0.45).toFixed(2));
+      svg.style.setProperty("--tilt", (-12 + rand() * 24).toFixed(1) + "deg");
+      svg.style.setProperty("--fade", (0.6 + rand() * 0.4).toFixed(2));
+      svg.inkblot = blot;
+      blot.visible = !io;
+      host.appendChild(svg);
+      pose(t, [blot]);
+      if (io) io.observe(svg); else onScreen.push(blot);
+      blots.push(blot);
+    }
+
+    function fill() {
+      var need = Math.ceil(host.offsetHeight / GAP);
+      while (blots.length < need) add(blots.length);
+    }
+
+    function save() {
+      try { sessionStorage.setItem(KEY, JSON.stringify({ seed: seed, t: t })); } catch (e) {}
+    }
+
+    if (reduceMotion) t = Math.max(t, SPREAD); // stay as still blots
+    fill();
+    if ("ResizeObserver" in window) new ResizeObserver(fill).observe(document.body);
+    save();
+    if (reduceMotion) return;
+
+    var t0 = t, start = 0, last = 0, raf = 0, running = false;
 
     function tick(now) {
       raf = requestAnimationFrame(tick);
       if (now - last < FRAME) return;
       last = now;
-      var t = (now - start - paused) / 1000;
-      var grow = easeOut(Math.min(1, t / SPREAD));
-      blots.forEach(function (b) { b.draw(t, grow); });
+      t = t0 + (now - start) / 1000;
+      pose(t, onScreen);
     }
 
-    // Only animate while the hero is on screen and the tab is visible
+    // Only animate while the tab is visible; the clock pauses while hidden
     function update() {
-      var should = visible && !document.hidden;
-      if (should && !running) {
-        if (pausedAt) paused += performance.now() - pausedAt;
+      if (!document.hidden && !running) {
+        t0 = t;
+        start = performance.now();
         running = true;
         raf = requestAnimationFrame(tick);
-      } else if (!should && running) {
+      } else if (document.hidden && running) {
         running = false;
-        pausedAt = performance.now();
         cancelAnimationFrame(raf);
+        save();
       }
     }
 
-    blots.forEach(function (b) { b.draw(0, 0); });
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (entries) {
-        visible = entries[0].isIntersecting;
-        update();
-      }).observe(host);
-    }
     document.addEventListener("visibilitychange", update);
+    window.addEventListener("pagehide", save);
     update();
   });
 

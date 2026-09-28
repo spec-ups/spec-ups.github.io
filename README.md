@@ -8,8 +8,8 @@ Plain HTML/CSS/JS with no build step, published straight from `main` by GitHub P
 ## Features
 
 - Light and dark themes (follows the system setting until you pick one), with a circular reveal when switching
-- Rorschach-style inkblots in the hero background: generated fresh on every visit, mirrored,
-  and slowly seeping and shifting
+- Rorschach-style inkblots scattered down every page: generated fresh on every visit, mirrored,
+  and slowly seeping and shifting, carried on unbroken as you move between pages
 - A headline that cycles through "games", "apps", "experiments" and more
 - Project cards that tilt toward the cursor, with a "Play here" button that opens the project
   in a pop-up without leaving the site
@@ -28,7 +28,7 @@ js/projects.js      your project list (edit this to add projects)
 js/main.js          shared: theme, cards, player pop-up, effects, chat
 js/home.js          home page: headline, stats, grid
 js/project.js       project page rendering
-js/inkblot.js       animated Rorschach inkblots in the hero
+js/inkblot.js       animated Rorschach inkblots scattered down every page
 js/bubbles.js       easter-egg bubble burst
 projects/           each self-contained project in its own folder
 worker/             optional "Ask the lab" chat backend (see worker/README.md)
