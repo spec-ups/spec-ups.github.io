@@ -238,13 +238,14 @@ img { max-width: 100%; display: block; }
 .hero-content { position: relative; z-index: 1; }
 
 .eyebrow {
-  display: inline-block;
-  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 14px;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--link);
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
-  padding: 6px 12px; border-radius: 999px;
   margin: 0 0 24px;
+}
+.eyebrow::before {
+  content: ""; width: 40px; height: 2px; border-radius: 2px; flex: none;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
 }
 
 .hero h1 {
