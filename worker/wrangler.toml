@@ -1,0 +1,10 @@
+name = "ai-lab-chat"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Sites allowed to call the chat (comma-separated). Add http://localhost:3000 etc. for local testing.
+ALLOWED_ORIGINS = "https://spec-ups.github.io"
+
+# The API key is a secret, not a var:  npx wrangler secret put ANTHROPIC_API_KEY

@@ -1,0 +1,3141 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Surface Tension</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Public+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+  /* ── palette ───────────────────────────────────────────────────────────
+     Two dives of the same water. Light is a bright lagoon near noon; dark
+     is the same sea at night. Light is the default here; dark arrives by
+     three routes — the system preference, the host's data-theme stamp, and
+     the in-page toggle, which writes data-st on <body> so it outranks both.
+     The dark palette is written twice (media query + explicit); keep the
+     two copies in step. */
+  :root, body[data-st="light"]{
+    color-scheme:light;
+    --bg:#e9e5dc; --text:#06293a; --text-2:#0d4257; --muted:#587c8c;
+    --accent:#06799b; --accent-soft:rgba(6,121,155,.13);
+    --film-rose:#a85843; --film-gold:#8e6320;
+    --ink:#3d4a86; --danger:#b34733;
+    --edge:rgba(0,104,149,.22);
+    --panel:rgba(255,255,255,.74); --panel-2:rgba(255,255,255,.58);
+    --veil-a:rgba(233,229,220,.86); --veil-b:rgba(233,229,220,.96);
+    --glow-1:#c5ddd7; --glow-2:#e4ded3;
+    --field-edge:rgba(0,104,149,.2);
+    --on-water:rgba(4,36,52,.66); --on-water-dim:rgba(4,36,52,.46);
+    --surf-veil:rgba(255,255,255,.42); --surf-line:rgba(255,255,255,.9);
+    --btn-fg:#04283a; --btn-1:#9ed6d4; --btn-2:#2fb0be; --btn-3:#0a87a8;
+    --btn-shadow:0 8px 22px -12px rgba(0,104,149,.8), inset 0 1px 0 rgba(255,255,255,.7);
+    --h1-grad:linear-gradient(96deg,#0799ba,#006895 38%,#1fa5b0 70%,#8e6320);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --bg:#1c1739; --text:#fbefe8; --text-2:#ecd9d6; --muted:#9a8dbd;
+      --accent:#ffd5a4; --accent-soft:rgba(255,213,164,.16);
+      --film-rose:#e9b6b5; --film-gold:#ffd5a4;
+      --ink:#a99ae6; --danger:#ff7d8e;
+      --edge:rgba(255,213,164,.18);
+      --panel:rgba(46,38,84,.7); --panel-2:rgba(46,38,84,.5);
+      --veil-a:rgba(28,23,57,.85); --veil-b:rgba(28,23,57,.96);
+      --glow-1:#3a2f63; --glow-2:#2a2350;
+      --field-edge:rgba(255,213,164,.12);
+      --on-water:rgba(251,239,232,.62); --on-water-dim:rgba(251,239,232,.45);
+      --surf-veil:rgba(233,182,181,.16); --surf-line:rgba(251,239,232,.55);
+      --btn-fg:#241c46; --btn-1:#ffe6cb; --btn-2:#ffd5a4; --btn-3:#e9b6b5;
+      --btn-shadow:0 8px 26px -10px rgba(255,213,164,.9), inset 0 1px 0 rgba(255,255,255,.6);
+      --h1-grad:linear-gradient(96deg,#ffd5a4,#e9b6b5 42%,#ba7893 78%,#5a6cb8);
+    }
+  }
+  :root[data-theme="dark"], body[data-st="dark"]{
+    color-scheme:dark;
+    --bg:#1c1739; --text:#fbefe8; --text-2:#ecd9d6; --muted:#9a8dbd;
+    --accent:#ffd5a4; --accent-soft:rgba(255,213,164,.16);
+    --film-rose:#e9b6b5; --film-gold:#ffd5a4;
+    --ink:#a99ae6; --danger:#ff7d8e;
+    --edge:rgba(255,213,164,.18);
+    --panel:rgba(46,38,84,.7); --panel-2:rgba(46,38,84,.5);
+    --veil-a:rgba(28,23,57,.85); --veil-b:rgba(28,23,57,.96);
+    --glow-1:#3a2f63; --glow-2:#2a2350;
+    --field-edge:rgba(255,213,164,.12);
+    --on-water:rgba(251,239,232,.62); --on-water-dim:rgba(251,239,232,.45);
+    --surf-veil:rgba(233,182,181,.16); --surf-line:rgba(251,239,232,.55);
+    --btn-fg:#241c46; --btn-1:#ffe6cb; --btn-2:#ffd5a4; --btn-3:#e9b6b5;
+    --btn-shadow:0 8px 26px -10px rgba(255,213,164,.9), inset 0 1px 0 rgba(255,255,255,.6);
+    --h1-grad:linear-gradient(96deg,#ffd5a4,#e9b6b5 42%,#ba7893 78%,#5a6cb8);
+  }
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; overscroll-behavior:none;
+    transition:background-color .35s ease, color .35s ease;
+  }
+  .wrap{
+    position:relative; display:flex; flex-direction:column;
+    height:100dvh; min-height:420px; padding:0 16px 14px;
+    background:
+      radial-gradient(120% 80% at 50% 108%, var(--glow-1) 0%, transparent 62%),
+      radial-gradient(90% 60% at 50% -10%, var(--glow-2) 0%, transparent 70%),
+      var(--bg);
+    max-width:820px; margin:0 auto;
+  }
+
+  /* One line, always. Every item reserves its widest state so the row never
+     reflows as the score grows or a held breath appears. */
+  .hud{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-block:12px 10px;border-bottom:1px solid var(--edge)}
+  .stat{display:flex;flex-direction:column;gap:2px;min-width:0;flex:0 0 auto}
+  .hud .sound{flex:0 0 auto}
+  .stat[hidden]{display:none}
+  .stat .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .stat .v{
+    font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;
+    font-size:22px;line-height:1;font-weight:600;color:var(--text);white-space:nowrap;
+  }
+  .stat.score .v{font-size:23px;color:var(--accent);min-width:6ch}
+  .stat.mult .v{min-width:3.2ch;color:var(--film-gold);transform-origin:0 70%}
+  .stat.clock .v{min-width:4.2ch}
+  .stat.mult.idle .v{color:var(--muted)}
+  .stat.mult .v.bump{animation:chain-bump .34s cubic-bezier(.3,1.7,.5,1)}
+  @keyframes chain-bump{ 0%{transform:scale(1)} 35%{transform:scale(1.32)} 100%{transform:scale(1)} }
+  .stat.mult.hot .v{text-shadow:0 0 10px color-mix(in srgb, currentColor 60%, transparent)}
+  .stat.clock .v.low{color:var(--danger)}
+  .hud .spacer{flex:1 1 auto}
+  .pips{display:flex;gap:5px;align-items:center;height:22px}
+  .pips i{
+    width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent);
+    background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.9), var(--accent-soft) 60%, transparent);
+    transition:transform .25s ease, opacity .25s ease, border-color .25s;
+  }
+  .pips i.gone{opacity:.28;border-color:var(--muted);background:none;transform:scale(.7)}
+  .pips i[hidden]{display:none}
+  .pips.gold i{border-color:var(--film-gold);background:radial-gradient(circle at 32% 30%, rgba(255,242,226,.95), rgba(255,213,164,.4) 60%, rgba(255,213,164,0))}
+  .pips.gain i:not(.gone){animation:breath .42s ease}
+  @keyframes breath{ 0%{transform:scale(.6);box-shadow:0 0 0 0 rgba(226,244,255,.8)} 60%{transform:scale(1.35)} 100%{transform:scale(1)} }
+  @media (prefers-reduced-motion:reduce){ .pips.gain i{animation:none} }
+  .sound{
+    appearance:none;border:1px solid var(--edge);background:var(--accent-soft);
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;
+    height:24px;color:var(--muted);border-radius:999px;padding:0 9px;
+    font:600 9.5px/1 "Public Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;transition:color .2s,border-color .2s;
+  }
+  .sound[aria-pressed="true"],.sound.lit{color:var(--accent);border-color:var(--accent)}
+  .sound:focus-visible,.btn:focus-visible,.seg button:focus-visible,.link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  /* Pill icons are drawn in CSS. Text glyphs like ☀ become emoji on iOS,
+     which sit off-centre, stretch the pill and push the row off-screen. */
+  .sound .ico{flex:0 0 auto;display:block}
+  .pause .bars{width:7px;height:8px;border-left:2.5px solid currentColor;border-right:2.5px solid currentColor}
+  .theme .ico{width:9px;height:9px;border-radius:50%}
+  .theme .ico.auto{border:1.5px solid currentColor;background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+  .theme .ico.light{width:5px;height:5px;margin:2px;background:currentColor;outline:1.5px dotted currentColor;outline-offset:1.5px}
+  .theme .ico.dark{box-shadow:inset -2.5px -1px 0 0 currentColor;transform:rotate(-20deg)}
+  .sound[hidden]{display:none}
+  /* Icon-only pills: sound and theme carry no label at any width, so they
+     stay a fixed small circle instead of a text-shaped capsule. */
+  .icon-only{width:24px;padding:0}
+  .icon-only .lbl{display:none}
+  .sound .ico.speaker{position:relative;width:14px;height:13px}
+  .sound .ico.speaker .cone{
+    position:absolute;left:0;top:0;width:8px;height:13px;background:currentColor;
+    clip-path:polygon(0% 35%, 38% 35%, 74% 8%, 74% 92%, 38% 65%, 0% 65%);
+  }
+  .sound .ico.speaker .wave{
+    position:absolute;left:9px;top:50%;border:1.5px solid currentColor;border-left:0;
+    border-radius:0 999px 999px 0;opacity:1;transition:opacity .15s ease;
+  }
+  .sound .ico.speaker .w1{width:3px;height:6px;margin-top:-3px}
+  .sound .ico.speaker .w2{width:6px;height:11px;margin-top:-5.5px}
+  .sound .ico.speaker .mute{
+    position:absolute;left:-2px;top:50%;width:18px;height:2px;background:currentColor;
+    transform:translateY(-50%) rotate(45deg);opacity:0;transition:opacity .15s ease;
+  }
+  .sound[aria-pressed="false"] .ico.speaker .wave{opacity:0}
+  .sound[aria-pressed="false"] .ico.speaker .mute{opacity:1}
+
+  .field{
+    position:relative;flex:1 1 auto;min-height:0;margin-top:10px;border-radius:18px;overflow:hidden;
+    border:1px solid var(--field-edge);
+    background:var(--bg);
+    touch-action:none;
+  }
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .surfline{position:absolute;inset:0 0 auto 0;height:54px;pointer-events:none;background:linear-gradient(180deg, var(--surf-veil), transparent)}
+  .surfline::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--surf-line),transparent)}
+  .surf-label{position:absolute;top:9px;left:14px;pointer-events:none;font:600 9px/1 "Public Sans",sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--on-water-dim)}
+  .depth{position:absolute;left:14px;bottom:12px;pointer-events:none;display:flex;flex-direction:column;gap:3px}
+  .depth .m{font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:var(--on-water)}
+  .depth .z{font:600 8.5px/1 "Public Sans",sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--on-water-dim)}
+  .flash{position:absolute;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 90px 10px var(--danger);transition:opacity .5s ease}
+  .flash.on{opacity:.55;transition:opacity .06s}
+  .flash.inky{box-shadow:inset 0 0 90px 10px var(--ink)}
+  .toast{
+    position:absolute;left:50%;bottom:18px;transform:translateX(-50%);pointer-events:none;opacity:0;
+    transition:opacity .35s ease;font:600 11px/1 "Public Sans",sans-serif;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink);background:var(--veil-b);border:1px solid currentColor;
+    padding:7px 13px;border-radius:999px;white-space:nowrap;
+  }
+  .toast.on{opacity:1;transition:opacity .08s}
+  .toast.good{color:var(--accent)}
+
+  .veil{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:13px;padding:20px 18px;text-align:center;overflow-y:auto;
+    /* an accent-tinted shaft of light falls from the surface, under the
+       existing lagoon wash — the same trick a dive light makes in murk */
+    background:
+      radial-gradient(55% 42% at 50% 6%, var(--accent-soft), transparent 72%),
+      radial-gradient(70% 60% at 50% 45%, var(--veil-a), var(--veil-b));
+    backdrop-filter:blur(3px);
+  }
+  .veil[hidden]{display:none}
+  .eyebrow{
+    display:inline-flex;align-items:center;font:600 10px/1 "Public Sans",sans-serif;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--accent);padding:7px 15px;border-radius:999px;
+    border:1px solid var(--edge);background:var(--accent-soft);box-shadow:0 0 18px -9px var(--accent);
+  }
+  .eyebrow .caret{
+    display:inline-block;width:1px;height:1em;margin-left:2px;background:currentColor;
+    animation:caret-blink 1s step-end infinite;
+  }
+  @keyframes caret-blink{ 0%,100%{opacity:1} 50%{opacity:0} }
+  @media (prefers-reduced-motion:reduce){ .eyebrow .caret{animation:none} }
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+  h1{
+    position:relative;margin:0;font-family:"Orbitron","Arial Narrow",sans-serif;font-weight:800;
+    font-size:clamp(26px,7.8vw,48px);line-height:1;text-wrap:balance;padding-block:.06em;color:var(--text);
+    letter-spacing:.01em;
+    filter:drop-shadow(0 0 22px var(--accent-soft));
+  }
+  /* The title floats. Each letter carries its own clipped copy of the
+     gradient so it can move on its own; script lines the copies up so the
+     sweep still reads as one piece. Padding gives heavy glyphs room to
+     paint, and the negative margins give that room back. */
+  h1 .word{display:inline-block;white-space:nowrap}
+  h1 .ch{
+    display:inline-block;padding:.1em .05em;margin:-.1em -.085em -.1em -.05em;
+    background-image:var(--h1-grad);background-repeat:no-repeat;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:title-rise .9s cubic-bezier(.2,.8,.25,1.2) both, title-bob 4.2s ease-in-out infinite;
+    animation-delay:calc(var(--i)*55ms), calc(.9s + var(--i)*90ms);
+  }
+  @keyframes title-rise{ from{opacity:0;transform:translateY(.6em) scale(.55)} to{opacity:1;transform:none} }
+  @keyframes title-bob{
+    0%,100%{transform:translateY(0) rotate(0)}
+    25%{transform:translateY(-.08em) rotate(-2.5deg)}
+    75%{transform:translateY(.05em) rotate(2deg)}
+  }
+  @media (prefers-reduced-motion:reduce){ h1 .ch{animation:none} }
+  h2{margin:0;font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;font-weight:700;font-size:clamp(22px,6.4vw,34px);line-height:1.05;letter-spacing:-.025em;color:var(--text)}
+  .veil p{margin:0;max-width:35ch;font-size:13.5px;line-height:1.5;color:var(--muted);text-wrap:balance}
+
+  .setup{display:flex;flex-direction:column;gap:9px;width:100%;max-width:410px}
+  .row{display:flex;flex-direction:column;gap:5px;align-items:center}
+  .row > span{font:600 9px/1 "Public Sans",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .seg{
+    display:flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--edge);
+    background:var(--panel-2);backdrop-filter:blur(6px);
+  }
+  .seg button{
+    appearance:none;border:0;cursor:pointer;border-radius:999px;padding:8px 14px;background:transparent;
+    color:var(--muted);font:600 12px/1 "Public Sans",sans-serif;
+    transition:background .18s ease,color .18s ease,box-shadow .18s ease,text-shadow .18s ease;
+  }
+  .seg button[aria-pressed="true"]{
+    background:linear-gradient(180deg, var(--accent-soft), transparent 75%);
+    color:var(--accent); text-shadow:0 0 12px var(--accent-soft);
+    box-shadow:0 0 0 1px var(--accent-soft) inset, 0 0 14px -5px var(--accent);
+  }
+  .seg.four button{padding:8px 9px;font-size:11.5px}
+  .seg.five{flex-wrap:wrap;justify-content:center;border-radius:20px}
+  .seg.five button{padding:8px 10px;font-size:11.5px}
+  /* a stretched flex item anchors to the cross-start edge once max-width
+     caps it below the container's width, so without align-self it drifts
+     left of center the moment its text is short enough to hit the cap */
+  .modehint{align-self:center;font-size:11.5px;color:var(--muted);min-height:2.4em;max-width:40ch}
+
+  /* Chunky game-object buttons: a glass highlight across the top third,
+     a punched-in shadow along the bottom, and a solid "step" beneath —
+     the pill reads as a physical cap with real thickness, not a flat tint. */
+  .btn{
+    position:relative;appearance:none;border:0;cursor:pointer;padding:14px 32px 17px;border-radius:999px;
+    font:800 14px/1 "Public Sans",sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--btn-fg);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,0) 46%),
+      linear-gradient(155deg,var(--btn-1),var(--btn-2) 55%,var(--btn-3));
+    box-shadow:
+      inset 0 2px 1px rgba(255,255,255,.7),
+      inset 0 -8px 0 rgba(0,0,0,.14),
+      0 5px 0 var(--btn-3),
+      0 16px 26px -12px rgba(0,0,0,.5),
+      0 0 24px -8px var(--accent);
+    transition:transform .12s ease, box-shadow .12s ease;
+    animation:btn-breathe 3.6s ease-in-out infinite;
+  }
+  /* a slow bioluminescent pulse on the halo only — the pill itself holds still */
+  @keyframes btn-breathe{
+    0%,100%{box-shadow:inset 0 2px 1px rgba(255,255,255,.7), inset 0 -8px 0 rgba(0,0,0,.14), 0 5px 0 var(--btn-3), 0 16px 26px -12px rgba(0,0,0,.5), 0 0 20px -9px var(--accent)}
+    50%{box-shadow:inset 0 2px 1px rgba(255,255,255,.7), inset 0 -8px 0 rgba(0,0,0,.14), 0 5px 0 var(--btn-3), 0 16px 26px -12px rgba(0,0,0,.5), 0 0 32px -6px var(--accent)}
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{
+    transform:translateY(4px);
+    animation-play-state:paused;
+    box-shadow:
+      inset 0 2px 1px rgba(255,255,255,.5),
+      inset 0 -3px 0 rgba(0,0,0,.16),
+      0 1px 0 var(--btn-3),
+      0 6px 14px -10px rgba(0,0,0,.5),
+      0 0 16px -8px var(--accent);
+  }
+  .btn.ghost{
+    padding:11px 24px 14px;font-size:12.5px;color:var(--accent);animation:none;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 50%),
+      var(--panel-2);
+    border:1.5px solid var(--accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.3),
+      inset 0 -5px 0 rgba(0,0,0,.1),
+      0 3px 0 var(--accent-soft),
+      0 0 16px -8px var(--accent);
+    text-shadow:0 0 10px var(--accent-soft);
+  }
+  .btn.ghost:hover{transform:translateY(-1px)}
+  .btn.ghost:active{
+    transform:translateY(3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.22),
+      inset 0 -2px 0 rgba(0,0,0,.12),
+      0 1px 0 var(--accent-soft);
+  }
+  .link{
+    appearance:none;border:1px solid transparent;background:none;cursor:pointer;color:var(--muted);
+    font:600 11px/1 "Public Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;
+    border-radius:999px;padding:7px 14px;transition:color .18s ease,border-color .18s ease,background .18s ease;
+  }
+  .link:hover{color:var(--accent);border-color:var(--edge);background:var(--accent-soft)}
+  #backBtn{margin-top:12px}
+  @media (prefers-reduced-motion:reduce){ .btn{animation:none} }
+  .btnrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .homelinks{display:flex;gap:14px;justify-content:center;margin-top:12px}
+  .section{font:600 9px/1 "Public Sans",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:-5px}
+
+  .legend{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;max-width:410px}
+  .legend div{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 3px;border-radius:12px;border:1px solid var(--edge);background:var(--panel-2)}
+  .legend .dot{width:15px;height:15px;border-radius:50%}
+  .legend .dot.airp{background:radial-gradient(circle at 34% 30%,#ffffff,#cfe9ff 55%,rgba(190,225,255,.2));border:1px solid #8fbfe0}
+  .legend .dot.pearl{background:radial-gradient(circle at 34% 30%,#fff3e4,#ffd5a4 60%,rgba(255,213,164,.25));border:1px solid #c9954f}
+  .legend .dot.cluster{background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.8),rgba(233,182,181,.25) 60%,rgba(233,182,181,.08));border:1px solid var(--film-rose)}
+  .legend .dot.inkd{background:radial-gradient(circle at 34% 30%,#3a3358,#14121f 70%);border:1px solid var(--ink)}
+  .legend b{font:600 10px/1 "Public Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+  .legend small{font-size:10px;line-height:1.3;color:var(--muted)}
+  .legend.treasures{grid-template-columns:repeat(3,1fr);max-width:330px}
+  .legend .icon{width:22px;height:22px;margin-block:-3px}
+
+  .final{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;padding:12px 16px;border-radius:14px;border:1px solid var(--edge);background:var(--panel)}
+  .final div{display:flex;flex-direction:column;gap:4px}
+  .final .k{font:600 9px/1 "Public Sans",sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .final .v{font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;color:var(--text)}
+  .final .v.hi{color:var(--film-gold)}
+  .note{font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+  #shareBox{
+    width:100%;max-width:340px;padding:9px 11px;border-radius:10px;
+    border:1px solid var(--edge);background:var(--panel);color:var(--text-2);
+    font:500 11px/1.5 "Public Sans","Helvetica Neue",Arial,sans-serif;resize:none;height:74px;
+  }
+  #shareBox[hidden]{display:none}
+  .countdown{font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;font-weight:800;font-size:clamp(64px,22vw,120px);line-height:1;color:var(--text)}
+
+  @media (prefers-reduced-motion:reduce){ .btn,.pips i,.seg button{transition:none} }
+  @media (max-width:520px){
+    .stat .v{font-size:18px}
+    .stat.score .v{font-size:20px}
+    .stat .k{font-size:9px;letter-spacing:.08em}
+    .hud{gap:6px}
+    .pips{gap:4px}
+    .pips i{width:8px;height:8px}
+  }
+  @media (max-width:420px){
+    .veil{gap:10px}
+  }
+  /* every iPhone width: pause keeps its icon and loses its word */
+  @media (max-width:430px){
+    .pause .lbl{display:none}
+    .pause{padding-inline:7px}
+    .hud{gap:5px}
+    .seg.five{gap:2px}
+    .seg.five button{padding:8px 8px}
+  }
+  /* narrow phones: drop the labels rather than let anything wrap */
+  @media (max-width:385px){
+    .hud .stat .k{display:none}
+    .sound:not(.icon-only){padding:0 7px;font-size:9px;letter-spacing:.04em}
+    .pips i{width:7px;height:7px}
+    .pips{gap:3px}
+  }
+  @media (max-width:340px){
+    .stat .v{font-size:15px}
+    .stat.score .v{font-size:17px}
+    .sound:not(.icon-only){padding:0 5px;font-size:8.5px}
+    .hud{gap:4px}
+  }
+</style>
+
+<div class="wrap">
+  <div class="hud">
+    <div class="stat score"><span class="k">Score</span><span class="v" id="score">0</span></div>
+    <div class="stat mult idle"><span class="k">Chain</span><span class="v" id="mult">×1</span></div>
+    <div class="stat" id="heldStat"><span class="k">Held</span><div class="pips gold" id="held"><i></i><i></i></div></div>
+    <div class="spacer"></div>
+    <div class="stat clock" id="clockStat" hidden><span class="k">Time</span><span class="v" id="clock">1:00</span></div>
+    <div class="stat" id="airStat"><span class="k">Air</span><div class="pips" id="air"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <button class="sound pause" id="pauseBtn" type="button" aria-label="Pause" hidden><span class="ico bars" aria-hidden="true"></span><span class="lbl">Pause</span></button>
+    <button class="sound icon-only" id="sound" aria-pressed="true" aria-label="Sound" title="Sound">
+      <span class="ico speaker" aria-hidden="true"><i class="cone"></i><i class="wave w1"></i><i class="wave w2"></i><i class="mute"></i></span>
+      <span class="lbl">Sound</span>
+    </button>
+    <button class="sound theme icon-only" id="theme" type="button"><span class="ico auto" aria-hidden="true"></span><span class="lbl">Auto</span></button>
+  </div>
+
+  <div class="field" id="field">
+    <canvas id="cv"></canvas>
+    <div class="surfline"></div>
+    <div class="surf-label">Surface</div>
+    <div class="depth" id="depthChip" hidden><span class="m" id="depthM">0 m</span><span class="z" id="depthZ">Wave 1 · Shallows</span></div>
+    <div class="flash" id="flash"></div>
+    <div class="toast" id="toast"></div>
+
+    <div class="veil" id="startVeil">
+      <span class="eyebrow" id="tagline"><span class="sr-only">A game of nerve and fingertips</span><span class="type" id="taglineType" aria-hidden="true"></span><span class="caret" aria-hidden="true"></span></span>
+      <h1 id="title" aria-label="Surface Tension"><span class="word" aria-hidden="true"><span class="ch" style="--i:0">S</span><span class="ch" style="--i:1">u</span><span class="ch" style="--i:2">r</span><span class="ch" style="--i:3">f</span><span class="ch" style="--i:4">a</span><span class="ch" style="--i:5">c</span><span class="ch" style="--i:6">e</span></span> <span class="word" aria-hidden="true"><span class="ch" style="--i:7">T</span><span class="ch" style="--i:8">e</span><span class="ch" style="--i:9">n</span><span class="ch" style="--i:10">s</span><span class="ch" style="--i:11">i</span><span class="ch" style="--i:12">o</span><span class="ch" style="--i:13">n</span></span></h1>
+      <p>Pop them before they break the surface. Sound on.</p>
+
+      <div class="setup">
+        <div class="row">
+          <span>Mode</span>
+          <div class="seg five" id="modeSeg" role="group" aria-label="Mode">
+            <button type="button" data-v="survival" aria-pressed="true">Survival</button>
+            <button type="button" data-v="sprint" aria-pressed="false">Sprint</button>
+            <button type="button" data-v="blitz" aria-pressed="false">Blitz</button>
+            <button type="button" data-v="breath" aria-pressed="false">One Breath</button>
+            <button type="button" data-v="zen" aria-pressed="false">Zen</button>
+          </div>
+        </div>
+        <span class="modehint" id="modeHint"></span>
+      </div>
+
+      <div class="btnrow">
+        <button class="btn" id="startBtn">Dive in</button>
+      </div>
+      <div class="homelinks">
+        <button class="link" id="guideBtn" type="button">How to play</button>
+        <button class="link" id="settingsBtn" type="button">Settings</button>
+      </div>
+    </div>
+
+    <div class="veil" id="settingsVeil" hidden>
+      <span class="eyebrow">Before you dive</span>
+      <h2>Settings</h2>
+      <div class="setup">
+        <div class="row">
+          <span>Current</span>
+          <div class="seg" id="diffSeg" role="group" aria-label="Difficulty">
+            <button type="button" data-v="gentle" aria-pressed="false">Gentle</button>
+            <button type="button" data-v="standard" aria-pressed="true">Standard</button>
+            <button type="button" data-v="riptide" aria-pressed="false">Riptide</button>
+          </div>
+        </div>
+        <div class="row">
+          <span>Water</span>
+          <div class="seg" id="dailySeg" role="group" aria-label="Water">
+            <button type="button" data-v="free" aria-pressed="true">Free dive</button>
+            <button type="button" data-v="daily" aria-pressed="false">Today's dive</button>
+          </div>
+        </div>
+        <div class="row">
+          <span>Voice — tap to hear</span>
+          <div class="seg four" id="voiceSeg" role="group" aria-label="Pop voice">
+            <button type="button" data-v="bubble" aria-pressed="true">Bubble</button>
+            <button type="button" data-v="wood" aria-pressed="false">Wood</button>
+            <button type="button" data-v="bell" aria-pressed="false">Bell</button>
+            <button type="button" data-v="chime" aria-pressed="false">Chime</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn ghost" id="settingsBack">Done</button>
+    </div>
+
+    <div class="veil" id="guideVeil" hidden>
+      <span class="eyebrow">Field guide</span>
+      <h2>How to play</h2>
+      <p>Tap bubbles, or swipe through them, to pop them before they break the surface. Every unbroken pop multiplies the next, and they're worth more the higher you let them climb.</p>
+      <p>Let a bubble escape and it costs a breath. Hit ink and it costs one too, or five seconds against the clock; it also stops your swipe and clouds the water. A pearl gives you a held breath, which saves a chain that would have broken.</p>
+      <p>The deeper you dive, the stranger the water: the current starts to wander and the light gives out. The higher your score, the faster ink rushes up.</p>
+      <span class="section">Bubbles</span>
+      <div class="legend">
+        <div><i class="dot pearl"></i><b>Pearl</b><small>×3 + breath</small></div>
+        <div><i class="dot cluster"></i><b>Cluster</b><small>Splits</small></div>
+        <div><i class="dot airp"></i><b>Air</b><small>+1 breath</small></div>
+        <div><i class="dot inkd"></i><b>Ink</b><small>Avoid</small></div>
+      </div>
+      <span class="section">Treasures</span>
+      <div class="legend treasures" aria-label="Treasures">
+        <div><canvas class="icon" data-kind="star" width="44" height="44" aria-hidden="true"></canvas><b>Starfish</b><small>Pops ×2 · 10s</small></div>
+        <div><canvas class="icon" data-kind="horse" width="44" height="44" aria-hidden="true"></canvas><b>Seahorse</b><small>Chain +5</small></div>
+        <div><canvas class="icon" data-kind="chest" width="44" height="44" aria-hidden="true"></canvas><b>Treasure</b><small>+1,000 × zone</small></div>
+      </div>
+      <button class="btn ghost" id="guideBack">Back</button>
+    </div>
+
+    <div class="veil" id="overVeil" hidden>
+      <span class="eyebrow" id="overTag">Out of air</span>
+      <h2 id="overTitle">You surfaced</h2>
+      <div class="final">
+        <div><span class="k">Score</span><span class="v" id="fScore">0</span></div>
+        <div><span class="k">Depth</span><span class="v" id="fDepth">0 m</span></div>
+        <div><span class="k">Longest chain</span><span class="v" id="fChain">×1</span></div>
+        <div><span class="k">Best ever</span><span class="v hi" id="fBest">0</span></div>
+      </div>
+      <span class="note" id="overNote"></span>
+      <textarea id="shareBox" readonly hidden aria-label="Result to copy"></textarea>
+      <div class="btnrow">
+        <button class="btn" id="againBtn">Dive again</button>
+        <button class="btn ghost" id="copyBtn">Copy result</button>
+      </div>
+      <button class="link" id="backBtn">Change setup</button>
+    </div>
+
+    <div class="veil" id="pauseVeil" hidden>
+      <span class="eyebrow">Holding still</span>
+      <h2>Paused</h2>
+      <span class="note" id="pauseNote"></span>
+      <div class="btnrow">
+        <button class="btn" id="resumeBtn">Resume</button>
+        <button class="btn ghost" id="endBtn">End dive</button>
+      </div>
+      <span class="note">P or Esc to resume</span>
+    </div>
+
+    <div class="veil" id="cdVeil" hidden><span class="countdown" id="cdNum">3</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var fieldEl=document.getElementById('field');
+  var elScore=document.getElementById('score'),
+      elMult=document.getElementById('mult'), elAir=document.getElementById('air'),
+      elHeld=document.getElementById('held'),
+      elClock=document.getElementById('clock'), clockStat=document.getElementById('clockStat'),
+      airStat=document.getElementById('airStat'),
+      flashEl=document.getElementById('flash'), toastEl=document.getElementById('toast'),
+      depthChip=document.getElementById('depthChip'), depthM=document.getElementById('depthM'),
+      depthZ=document.getElementById('depthZ');
+  var startVeil=document.getElementById('startVeil'), overVeil=document.getElementById('overVeil'),
+      cdVeil=document.getElementById('cdVeil'), cdNum=document.getElementById('cdNum');
+  var soundBtn=document.getElementById('sound');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ════════ TAGLINE TYPEWRITER ════════
+     The chip above the title cycles through a few lines, typed and erased
+     letter by letter. Reduced motion gets the first line, held still. */
+  var TAGLINES=[
+    'A game of nerve and fingertips',
+    'Dive down if you dare',
+    "Pop ’til you stop",
+    'Hold your breath. Trust your hands.',
+    'One tap too slow and it’s over'
+  ];
+  var taglineEl=document.getElementById('taglineType');
+  if(taglineEl){
+    if(reduce){
+      taglineEl.textContent=TAGLINES[0];
+    } else {
+      (function(){
+        var li=0, ci=0, deleting=false, holdLeft=0;
+        function tick(){
+          var full=TAGLINES[li];
+          if(holdLeft>0){ holdLeft-=1; setTimeout(tick,holdLeft?200:16); return; }
+          if(!deleting){
+            ci++;
+            taglineEl.textContent=full.slice(0,ci);
+            if(ci>=full.length){ deleting=true; holdLeft=11; setTimeout(tick,200); return; }
+            setTimeout(tick,32+Math.random()*46);
+          } else {
+            ci--;
+            taglineEl.textContent=full.slice(0,ci);
+            if(ci<=0){ deleting=false; li=(li+1)%TAGLINES.length; setTimeout(tick,260); return; }
+            setTimeout(tick,20+Math.random()*18);
+          }
+        }
+        tick();
+      })();
+    }
+  }
+
+  /* ════════ THEME ════════
+     Light and dark are the same dive at different hours: the water still
+     darkens as you descend, it just starts from noon instead of midnight.
+     Everything the canvas paints reads from PAL, so switching is one
+     assignment plus a dropped gradient cache — no reload, mid-dive or not. */
+  /* Both ramps are anchored on the five swatches of a beach photograph's
+     palette board and interpolated across the six depth zones, so
+     descending walks the whole palette from its lightest colour to its
+     darkest rather than just dimming a single hue.
+       Light is "Blue Beach": white sand, sea glass, turquoise, deep ocean.
+       Dark is "Pink Sunset": peach, dusty rose and mauve over a
+     periwinkle-to-indigo sea. */
+  var WATER_DARK=[
+    [[104,116,186],[58,52,112]], [[88,100,170],[48,43,98]], [[74,84,150],[40,36,84]],
+    [[60,68,128],[32,29,70]],    [[46,52,104],[24,22,54]],  [[32,36,78],[16,14,38]]
+  ];
+  var WATER_LIGHT=[
+    [[198,224,216],[142,193,184]], [[160,206,202],[84,180,186]], [[122,190,196],[31,165,176]],
+    [[80,172,192],[7,153,186]],    [[40,146,186],[0,120,162]],   [[10,110,158],[0,74,110]]
+  ];
+  var THEMES={
+    dark:{
+      water:WATER_DARK,
+      // the sunset's own sequence: peach at the top of the sky, then rose,
+      // mauve, and the two blues the sea keeps
+      films:[[255,213,164],[233,182,181],[186,120,147],[150,165,240],[214,178,230]],
+      gold:[255,213,164], inkC:[169,154,230], airC:[205,215,255],
+      inkOrb:[[86,72,140],[38,30,72],[20,16,42]],
+      airGlow:[[255,240,232],[233,182,181],[150,165,240]], airRing:[255,236,224],
+      shaft:[[255,224,196],[233,182,181],[140,140,220]], shaftA:1,
+      snow:[245,224,226], snowA:1,
+      kelp:[44,32,78], kelpLit:[132,96,150],
+      fish:[30,24,60], fishA:1,
+      mote:[[255,213,164],[233,182,181],[150,165,240]], moteA:1,
+      levi:[14,10,32], leviA:1,
+      murk:[10,8,26], murkA:1,
+      warm:[255,196,140], warmA:1, warn:[255,184,124],
+      link:[245,200,205], linkA:1, linkOp:'lighter',
+      pop:[248,214,212], hot:[255,196,140], bad:[255,125,142],
+      core:[255,244,238],
+      star:[255,190,130], horse:[150,165,240], chest:[255,205,150],
+      spec:1, filmA:1, dim:0
+    },
+    light:{
+      water:WATER_LIGHT,
+      // deeper, more saturated films: a bubble on bright water reads by its
+      // rim and by being a touch richer than the sea behind it. The board
+      // has no warm hue but the sand does, so the treasures borrow its
+      // shadow tone — the one colour on a bright beach that isn't blue.
+      films:[[0,104,149],[31,165,176],[6,121,155],[20,120,104],[142,99,32]],
+      gold:[142,99,32], inkC:[61,74,134], airC:[6,100,140],
+      inkOrb:[[92,98,158],[44,48,96],[26,26,58]],
+      airGlow:[[255,255,255],[198,228,224],[110,180,196]], airRing:[0,104,149],
+      shaft:[[255,253,244],[214,232,224],[142,193,184]], shaftA:1.5,
+      snow:[252,250,244], snowA:1.9,
+      kelp:[26,84,72], kelpLit:[106,166,146],
+      fish:[10,58,76], fishA:0.85,
+      mote:[[255,250,236],[142,193,184],[31,165,176]], moteA:1.2,
+      levi:[10,50,74], leviA:0.8,
+      murk:[236,244,242], murkA:1.25,
+      warm:[190,132,54], warmA:1.3, warn:[166,104,14],
+      link:[6,121,155], linkA:1.6, linkOp:'source-over',
+      pop:[0,104,149], hot:[166,96,20], bad:[179,71,51],
+      core:[255,255,255],
+      star:[186,128,46], horse:[20,126,110], chest:[142,99,32],
+      spec:0.9, filmA:1.7, dim:0.55
+    }
+  };
+  var PAL=THEMES.dark, themeName='dark', themePref='auto';
+  try{ var tp0=localStorage.getItem('st.theme'); if(tp0==='light'||tp0==='dark'||tp0==='auto') themePref=tp0; }catch(e){}
+  var darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+
+  // strokes and type that sit on top of the water: bright hues need taking
+  // down before they'll hold an edge against a lit sea
+  function shade(c){
+    var d=PAL.dim;
+    if(!d) return c;
+    return [Math.round(c[0]*(1-d)+6*d), Math.round(c[1]*(1-d)+44*d), Math.round(c[2]*(1-d)+52*d)];
+  }
+
+  var themeBtn=document.getElementById('theme');
+  var THEME_FACE={auto:['Auto','Theme: following your system'],
+                  light:['Light','Theme: light'],
+                  dark:['Dark','Theme: dark']};
+  // Resolves 'auto' down to an actual 'light'/'dark' name.
+  function systemTheme(){
+    // the host stamps its own choice on <html>; fall back to the OS
+    var stamp=document.documentElement.getAttribute('data-theme');
+    if(stamp==='light'||stamp==='dark') return stamp;
+    return darkMQ && darkMQ.matches ? 'dark' : 'light';
+  }
+  // Switches the active palette (PAL) and repaints every theme-dependent
+  // UI bit: the theme button's icon/label, cached gradients, canvas legend.
+  function applyTheme(){
+    themeName = themePref==='auto' ? systemTheme() : themePref;
+    PAL = THEMES[themeName];
+    document.body.setAttribute('data-st', themeName);
+    var face=THEME_FACE[themePref];
+    themeBtn.querySelector('.ico').className='ico '+themePref;
+    themeBtn.querySelector('.lbl').textContent=face[0];
+    themeBtn.setAttribute('aria-label', face[1]+' — tap to change');
+    themeBtn.setAttribute('title', face[1]);
+    themeBtn.classList.toggle('lit', themePref!=='auto');
+    waterGrad=null; gradKey='';              // the sea has to be mixed again
+    if(STATE==='paused'&&W) draw(0);          // the frame loop is idle while paused
+    paintLegendIcons();
+  }
+  themeBtn.addEventListener('click',function(){
+    themePref = themePref==='auto' ? 'light' : themePref==='light' ? 'dark' : 'auto';
+    try{ localStorage.setItem('st.theme', themePref); }catch(e){}
+    applyTheme();
+  });
+  // Re-applies the theme when the OS scheme changes, but only if the
+  // player hasn't overridden it with an explicit light/dark choice.
+  function onSystemTheme(){ if(themePref==='auto') applyTheme(); }
+  if(darkMQ){
+    if(darkMQ.addEventListener) darkMQ.addEventListener('change',onSystemTheme);
+    else if(darkMQ.addListener) darkMQ.addListener(onSystemTheme);
+  }
+  if(window.MutationObserver){
+    new MutationObserver(onSystemTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  }
+  applyTheme();
+
+  // ── seeded randomness (for Today's dive) ──
+  var RNG=Math.random;
+  // A small, fast PRNG (mulberry32) seeded from a number, so "Today's dive"
+  // can reproduce the exact same run for everyone from the same seed.
+  function mulberry32(a){
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      var t=Math.imul(a^a>>>15,1|a);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+  // The one call site every random draw in the game goes through, so
+  // swapping RNG (real Math.random vs. the seeded one) affects everything.
+  function rnd(){ return RNG(); }
+  // Today's date as 'YYYY-MM-DD', used as part of the daily-seed key.
+  function todayKey(){
+    var d=new Date();
+    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  }
+  // Switches RNG to a seeded generator for Today's dive (same bubbles for
+  // everyone on the same date/mode/difficulty), or back to real randomness.
+  function seedNow(){
+    if(!daily){ RNG=Math.random; return; }
+    var key=todayKey()+'|'+mode+'|'+diff, h=2166136261;
+    for(var i=0;i<key.length;i++){ h^=key.charCodeAt(i); h=Math.imul(h,16777619); }
+    RNG=mulberry32(h>>>0);
+  }
+
+  var W=0,H=0,DPR=1;
+  // Re-measures the play field, resizes the canvas backing store to match
+  // the device pixel ratio, and reseeds the background scene if the field
+  // changed size enough to matter.
+  function resize(){
+    var r=fieldEl.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,2);
+    var w=Math.max(1,r.width), h=Math.max(1,r.height);
+    if(w===W&&h===H&&dpr===DPR) return;       // the observer and the window often report the same size
+    // a phone's toolbar sliding in changes the height a little; that
+    // shouldn't reshuffle the kelp and fish mid-dive
+    var reseed=!W||Math.abs(w-W)>40||Math.abs(h-H)>160;
+    W=w; H=h; DPR=dpr;
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    if(reseed) seedScene();
+    if(STATE==='paused') draw(0);             // resizing clears the canvas; the loop is idle while paused
+  }
+  if(window.ResizeObserver){ new ResizeObserver(resize).observe(fieldEl); }
+  window.addEventListener('resize',resize);
+
+  var DIFF={
+    gentle:  {decay:0.985, min:0.58, spd:0.76, air:6, wave:18, label:'Six breaths of air and a slow, easy build.'},
+    standard:{decay:0.976, min:0.36, spd:0.88, air:4, wave:16, label:'Four breaths. A steady climb.'},
+    riptide: {decay:0.965, min:0.23, spd:1.04, air:3, wave:13, label:'Three breaths and a fast current.'}
+  };
+  /* clock: seconds on the timer (0 = none). air: misses cost breath.
+     pace: how fast the current quickens. ink: whether ink spawns. */
+  var MODES={
+    survival:{name:'Survival',   clock:0,  air:true,  ink:true,  pace:1,   hint:''},
+    sprint:  {name:'Sprint',     clock:60, air:false, ink:true,  pace:1,   hint:'Sixty seconds, no air limit. '},
+    blitz:   {name:'Blitz',      clock:30, air:false, ink:true,  pace:2.4, hint:'Thirty seconds in a current that keeps quickening. '},
+    breath:  {name:'One Breath', clock:0,  air:true,  ink:true,  pace:1,   hint:'Let one bubble escape and the dive is over; a pearl\u2019s held breath covers one. '},
+    zen:     {name:'Zen',        clock:0,  air:false, ink:false, pace:0.7, hint:'No air, no ink, no clock. End the dive from the pause menu. '}
+  };
+  // Max breaths for the current mode/difficulty (One Breath always caps at 1).
+  function airCap(){ return mode==='breath' ? 1 : DIFF[diff].air; }
+
+  /* Zone colour lives in the palette (PAL.water), indexed to match. */
+  var ZONES=[
+    {at:0,     name:'Shallows',        minor:false},
+    {at:3000,   name:'The Drift',       minor:false},
+    {at:10000,  name:'Kelp Line',       minor:false},
+    {at:30000,  name:'Blue Dark',       minor:true},
+    {at:75000, name:'Bioluminescence', minor:true},
+    {at:160000, name:'The Trench',      minor:true}
+  ];
+
+  var mode='survival', diff='standard', daily=false;
+  var STATE='idle';
+  var bubbles=[], bits=[], rings=[], respawn=[], pops=[], links=[], murk=[];
+  var score=0, streak=0, bestChain=1, air=4, held=0, HELD_MAX=2,
+      elapsed=0, timeLeft=0, wave=1, spawnTimer=0,
+      popped=0, missed=0, pearls=0, inked=0, saves=0, breaths=0, airCool=14,
+      lastMult=1, zoneIdx=0, lastPop=null;
+  // treasures: the star tide multiplies every pop while it runs
+  var tideT=0, tideMax=10, tideLevel=1, itemCool=14, treasures=0;
+  // Current star-tide score multiplier, or 1 when no tide is active.
+  function tideMul(){ return tideT>0 ? tideLevel : 1; }
+  // True for the three treasure bubble kinds (as opposed to plain/pearl/etc).
+  function isTreasure(k){ return k==='star'||k==='horse'||k==='chest'; }
+  var T=0;
+  var bests={};
+  try{ bests=JSON.parse(localStorage.getItem('st.bests')||'{}')||{}; }catch(e){ bests={}; }
+  // localStorage key for the current mode+difficulty(+daily) best score.
+  function bestKey(){ return mode+'.'+diff+(daily?'.daily':''); }
+  // Saved best score for the current mode/difficulty, or 0 if none yet.
+  function getBest(){ return bests[bestKey()]||0; }
+  // Score converted to the "depth" shown in the HUD and results.
+  function depthMeters(){ return Math.round(score/20); }
+  // The ZONES entry for the current depth zone.
+  function zone(){ return ZONES[zoneIdx]; }
+
+  var soundOn=true, voiceKind='bubble';
+  try{ soundOn = localStorage.getItem('st.sound')!=='0'; }catch(e){}
+  try{
+    var vs=localStorage.getItem('st.voice');
+    if(vs==='bubble'||vs==='wood'||vs==='bell'||vs==='chime') voiceKind=vs;
+  }catch(e){}
+  soundBtn.setAttribute('aria-pressed', soundOn?'true':'false');
+
+  /* ════════ AUDIO ════════
+     Kept deliberately light: no convolution reverb (the single most
+     CPU-hungry standard Web Audio node) and every short-lived node is
+     disconnected once its sound ends, because a phone-class CPU — an
+     iPhone included — chokes on Web Audio graphs that are either too big
+     or that quietly accumulate nodes over a long play session; both show
+     up as the same thing, crackling or fully broken audio. Depth and
+     space come from a single shared delay line (`echo`) instead. */
+  var AC=null, bus=null, comp=null, echo=null, voices=0;
+
+  /* ── the backing track ──
+     Not an ambient bed any more: a short, bright, looping pop tune, the
+     kind an early-2010s browser game would open on. Six oscillators and
+     one noise source, all created once and never torn down — every hit is
+     a scheduled envelope on a permanent node rather than a new node, so
+     the loop costs a phone exactly the same after five minutes as after
+     five seconds.
+
+     It's quantised to a 16th-note grid at a fixed tempo, and that grid is
+     half the point. The drone and foghorn it replaces were free-running:
+     they overlapped each other, they overlapped the pops, and nothing ever
+     landed anywhere in particular. Here every sound has a slot. */
+  var music=null, musicOn=false, musicTimer=null, musicStep=0, musicNext=0, musicStart=0;
+  var energy=0, chainEnergy=0;
+  var BPM=112, STEP16=15/BPM;              // 15/BPM === (60/BPM)/4: one 16th note
+  /* Chord roots as pentatonic scale-degree indices, one per bar. Picking
+     roots that are themselves notes of the scale is deliberate: it means
+     the backing track and the popping share a single harmony instead of
+     running two progressions against each other, which is what chordRootIdx
+     below reads to keep every pop inside the chord that's actually playing. */
+  var PROG_MAJ=[0,3,4,2];        // I – V – vi – iii
+  var PROG_MIN=[0,4,2,3];        // i – VII – iv – v
+  // Stacked in scale degrees, these come out as a plain major triad on the
+  // major pentatonic and a plain minor triad on the minor one.
+  var TRIAD_MAJ=[0,2,3], TRIAD_MIN=[0,1,3];
+  /* One bar is 16 steps. Drum rows are hit/rest; bass and arp rows are
+     scale degrees relative to the bar's chord root, with -1 for a rest.
+     The parts are deliberately laid out to collide as little as possible —
+     the kick has beats 1 and 3 to itself, the clap takes 2 and 4, the hats
+     sit on the offbeats between them, and the bass moves in the gaps. */
+  var P_KICK=[ 1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1,  0, 0, 0, 0];
+  var P_CLAP=[ 0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0];
+  var P_HAT =[ 0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 1];
+  var P_STAB=[-1,-1,-1,-1, -1,-1, 0,-1, -1,-1,-1,-1, -1,-1, 0,-1];
+  var P_BASS=[ 0,-1,-1, 0, -1,-1, 3,-1,  0,-1,-1, 3, -1,-1, 5,-1];
+  var P_ARP =[-1, 0,-1, 2, -1, 3,-1, 5, -1, 3,-1, 2, -1, 0,-1, 2];
+
+  // Lazily creates and wires up the whole audio graph (compressor, the
+  // shared delay line, the ambient bed) on first use, and resumes it if
+  // suspended. Returns null when sound is off or Web Audio isn't
+  // available, which is the "no sound" guard every sound function checks
+  // first.
+  function ac(){
+    if(!soundOn) return null;
+    if(!AC){
+      var C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+      AC=new C();
+      comp=AC.createDynamicsCompressor();
+      // a fast limiter for bursts, not a clamp on every single pop: a lone
+      // pop's peak sits above this and passes through close to untouched,
+      // but a swipe tearing through a dozen bubbles at once — where all
+      // their peaks land on top of each other — has somewhere to go
+      comp.threshold.value=-16; comp.knee.value=8; comp.ratio.value=5;
+      comp.attack.value=0.002; comp.release.value=0.18;
+      var out=AC.createGain(); out.gain.value=0.9;
+      comp.connect(out); out.connect(AC.destination);
+      bus=AC.createGain(); bus.gain.value=1; bus.connect(comp);
+      // A light slap-back, not a reverb: short delay, quick feedback decay,
+      // and a modest send level. Its delay is exactly one eighth note of
+      // the backing track's tempo, so the repeats land on the beat instead
+      // of smearing across it — an off-grid echo under a rhythmic loop is
+      // the thing that makes a mix sound like mush.
+      echo=AC.createDelay(1.2); echo.delayTime.value=STEP16*2;
+      var fb=AC.createGain(); fb.gain.value=0.12;
+      var damp=AC.createBiquadFilter(); damp.type='lowpass'; damp.frequency.value=1100;
+      echo.connect(damp); damp.connect(fb); fb.connect(echo);
+      var echoOut=AC.createGain(); echoOut.gain.value=0.08;
+      damp.connect(echoOut); echoOut.connect(comp);
+      buildMusic(AC);
+    }
+    if(AC.state==='suspended'){ AC.resume(); }
+    return AC;
+  }
+  // A stereo panner clamped to a safe range, falling back to a plain gain
+  // node (no panning) on browsers without StereoPannerNode.
+  function panner(a,x){
+    var p;
+    if(a.createStereoPanner){ p=a.createStereoPanner(); p.pan.value=Math.max(-0.85,Math.min(0.85,x)); }
+    else { p=a.createGain(); }
+    return p;
+  }
+
+  /* Every melodic pitch in the game is expressed as an integer "scale
+     degree" index into a 5-note pentatonic scale (MAJOR or MINOR), not as
+     a raw semitone count — see midiFor(). That's what lets chord math
+     elsewhere just add/subtract small integers (root+2, mel-2*v, …) and
+     stay in key almost no matter what, since pentatonic scales have no
+     truly dissonant combination of tones. */
+  var MAJOR=[0,2,4,7,9], MINOR=[0,3,5,7,10];
+  var ROOTS=[50,55,53,57,52,58];
+  // Which 5-note scale (major or minor pentatonic) the current zone uses.
+  function scaleSet(){ return zone().minor?MINOR:MAJOR; }
+  // The tonal centre (as a MIDI note) for the current wave, dipping lower
+  // once you're deep enough (zoneIdx>=5).
+  function rootNote(){ return ROOTS[(wave-1)%ROOTS.length] - (zoneIdx>=5?5:0); }
+  // Converts a scale-degree index (can be any integer, wraps into octaves)
+  // into an actual MIDI note number, relative to the current root/scale.
+  function midiFor(i){
+    var S=scaleSet();
+    i=Math.max(-7,Math.min(20,Math.round(i)));
+    var oct=Math.floor(i/S.length), deg=((i%S.length)+S.length)%S.length;
+    return rootNote()+S[deg]+12*oct;
+  }
+  // Converts a MIDI note number to a frequency in Hz (A4=440), clamped to
+  // a sane audible range.
+  function freqOf(m){ return Math.max(42,Math.min(6000,440*Math.pow(2,(m-69)/12))); }
+  // Scale-degree index straight to a frequency — the one call most melody
+  // code uses instead of chaining midiFor()+freqOf() itself.
+  function scaleFreq(i){ return freqOf(midiFor(i)); }
+  // Maps a bubble's radius to a melodic scale-degree: bigger bubbles play
+  // lower, and the whole range creeps upward as the chain grows.
+  function degreeFor(r){ return (48-Math.max(10,Math.min(48,r)))/38*11 + Math.min(streak,7); }
+
+  /* Plays one tuned tone: a sine core, a detuned partial for body, and (for
+     non-"simple" calls) a third harmonic for shimmer. This is the single
+     synth voice every melodic sound in the game — pops, harmony, chords,
+     the countdown beeps — is built from.
+     Every node is explicitly disconnected once its sound ends. iOS Safari
+     is slow to garbage-collect Web Audio nodes that are still wired into
+     a live graph, even after they've stopped; on a swipe-heavy game that
+     can spawn hundreds of short oscillators a minute, skipping this step
+     is what eventually turns the audio to crackling mush on an iPhone. */
+  function note(freq,opt){
+    var a=ac(); if(!a) return;
+    if(voices>10) return;      // a swipe through a big cluster can't open dozens of oscillators
+    opt=opt||{};
+    var t=a.currentTime+(opt.when||0);
+    var glass=opt.glass==null?0.5:opt.glass;
+    var dur=opt.dur || (0.42+glass*0.95);
+    var vol=(opt.vol==null?0.2:opt.vol) * (voices>8?0.62:voices>4?0.82:1);
+    voices++;
+    var g=a.createGain();
+    var f=a.createBiquadFilter(); f.type='lowpass';
+    f.frequency.setValueAtTime(Math.min(12000,freq*(4+glass*7)),t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(300,freq*(1.1+glass*0.9)),t+dur*0.7);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol,t+0.006+(1-glass)*0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    var o1=a.createOscillator(); o1.type='sine';
+    o1.frequency.setValueAtTime(freq*(opt.slide===false?1:0.94),t);
+    o1.frequency.exponentialRampToValueAtTime(freq,t+0.05);
+    o1.detune.value=(Math.random()*8-4);
+    var o2=a.createOscillator(); o2.type=glass>0.55?'sine':'triangle';
+    o2.frequency.setValueAtTime(freq*(glass>0.55?2.007:3.01),t);
+    var g2=a.createGain(); g2.gain.value=0.15+glass*0.22;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    var o3=null, g3=null;
+    if(!opt.simple){
+      o3=a.createOscillator(); o3.type='sine';
+      o3.frequency.setValueAtTime(freq*(glass>0.55?4.02:1.5),t);
+      g3=a.createGain(); g3.gain.value=0.04+glass*0.08;
+      o3.connect(g3); g3.connect(g);
+    }
+    var p=panner(a,opt.pan||0);
+    g.connect(f); f.connect(p);
+    p.connect(bus);
+    if(opt.echo!==false) p.connect(echo);
+    var end=t+dur+0.06;
+    o1.onended=function(){
+      voices=Math.max(0,voices-1);
+      o1.disconnect(); o2.disconnect(); g.disconnect(); g2.disconnect(); f.disconnect(); p.disconnect();
+      if(o3){ o3.disconnect(); g3.disconnect(); }
+    };
+    o1.start(t); o2.start(t); o1.stop(end); o2.stop(end);
+    if(o3){ o3.start(t); o3.stop(end); }
+  }
+  // Fades a short filtered-noise buffer in and back out; reused for every
+  // "burst of air/fizz" texture (pops, splashes, coins, wind) instead of a
+  // sharp on/off click, which reads as harsh on phone speakers.
+  var noiseBufs={};
+  // Renders (and caches) a short burst of decaying white noise of a given
+  // length — one buffer per distinct duration, reused for every call, so a
+  // pop never allocates a fresh buffer.
+  function noiseBuf(a,dur){
+    var key=Math.round(dur*1000);
+    if(!noiseBufs[key]){
+      var len=Math.ceil(a.sampleRate*dur);
+      var buf=a.createBuffer(1,len,a.sampleRate), ch=buf.getChannelData(0);
+      for(var i=0;i<len;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);
+      noiseBufs[key]=buf;
+    }
+    return noiseBufs[key];
+  }
+  // Plays one of those cached noise buffers through a bandpass filter —
+  // the "fizz"/"air" layer under most pops, splashes, and impacts.
+  function noise(vol,dur,freq,pan){
+    var a=ac(); if(!a) return;
+    var t=a.currentTime;
+    var src=a.createBufferSource(); src.buffer=noiseBuf(a,dur);
+    var bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=freq||1600; bp.Q.value=1.1;
+    var g=a.createGain(); g.gain.value=vol;
+    var p=panner(a,pan||0);
+    src.connect(bp); bp.connect(g); g.connect(p); p.connect(bus);
+    src.onended=function(){ src.disconnect(); bp.disconnect(); g.disconnect(); p.disconnect(); };
+    src.start(t);
+  }
+  // Maps a bubble's x position to a stereo pan value (-0.85..0.85).
+  function panOf(b){ return W? (b.x/W)*1.7-0.85 : 0; }
+
+  // ── chain harmony ──
+  // Which 4-pop "step" the current chain is on. Only the chain's colour
+  // rides on this now; the harmony itself comes off the audio clock below.
+  function chainStep(){ return Math.floor(Math.max(0,streak-1)/4); }
+  /* The chord the backing track is playing *right now*, as a scale-degree
+     index, read straight off the audio clock. Pops used to run their own
+     streak-driven progression while the music ran another, so the two
+     drifted in and out of agreement; sharing one means a pop can never
+     land outside the chord under it. A long chain still lifts the pop
+     register an octave at a time on top of that. */
+  function chordRootIdx(){
+    var lift=5*Math.min(2,Math.floor(streak/12));
+    if(!AC||!musicOn) return lift;
+    var prog=zone().minor?PROG_MIN:PROG_MAJ;
+    var bar=Math.floor(Math.max(0,AC.currentTime-musicStart)/(STEP16*16));
+    return prog[bar%prog.length]+lift;
+  }
+  // Rounds a melodic degree to the nearest chord tone (an even number of
+  // scale steps from root), so improvised melody notes stay in harmony.
+  function snapToChord(i,root){ return root + Math.round((i-root)/2)*2; }
+
+  /* A live chain used to start a sustained chord pad on top of
+     everything else — one more continuous layer competing with the drone,
+     the echo and the pops for the same space. It says the same thing far
+     more cleanly as a number: how much of the backing track to unlock.
+     Hats, then a clap, then chord stabs, then the top line come in as the
+     chain grows, so "the chain is alive" is something the music already
+     playing *does*, not another voice stacked over it. */
+  function chainLift(){ ac(); chainEnergy=Math.min(1,0.26+Math.min(streak,18)*0.041); }
+  // Chain broken, or the dive ended/paused: the arrangement thins back out.
+  function chainDrop(){ chainEnergy=0; }
+
+  /* ── pop voices ──
+     All four take the same chord-snapped pitch, so the harmony logic is
+     identical; only the body of the sound changes. */
+
+  // A bubble collapsing: a click of air, then a very short tone whose pitch
+  // snaps upward as the cavity closes. Dry — barely any tail.
+  function popBubble(freq,pan,glass,pace){
+    var a=ac(); if(!a) return;
+    pace=pace==null?1:pace;
+    var t=a.currentTime;
+    noise(0.075*pace,0.026,2400+glass*4400,pan);
+    var o=a.createOscillator(), g=a.createGain(), f=a.createBiquadFilter();
+    f.type='lowpass';
+    f.frequency.setValueAtTime(Math.min(13000,freq*9),t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(400,freq*2.2),t+0.1);
+    o.type='sine';
+    o.frequency.setValueAtTime(freq*0.56,t);
+    o.frequency.exponentialRampToValueAtTime(freq*1.09,t+0.058);
+    o.frequency.exponentialRampToValueAtTime(freq*0.99,t+0.12);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.37*pace,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+    var p=panner(a,pan);
+    o.connect(f); f.connect(g); g.connect(p); p.connect(bus);
+    o.onended=function(){ o.disconnect(); f.disconnect(); g.disconnect(); p.disconnect(); };
+    o.start(t); o.stop(t+0.16);
+  }
+
+  // A struck wooden bar: fundamental plus the 4th and 10th partials, gone fast.
+  function popWood(freq,pan,glass,pace){
+    var a=ac(); if(!a) return;
+    pace=pace==null?1:pace;
+    var t=a.currentTime, dur=0.26+glass*0.1;
+    noise(0.065*pace,0.02,3200,pan);
+    var g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.32*pace,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    var parts=[[1,1],[4.02,0.2],[9.6,0.05]];
+    var p=panner(a,pan);
+    g.connect(p); p.connect(bus);
+    for(var i=0;i<parts.length;i++){
+      var o=a.createOscillator(); o.type='sine';
+      o.frequency.setValueAtTime(freq*parts[i][0],t);
+      var pg=a.createGain(); pg.gain.value=parts[i][1];
+      o.connect(pg); pg.connect(g);
+      (function(osc,gg){ osc.onended=function(){ osc.disconnect(); gg.disconnect(); g.disconnect(); p.disconnect(); }; })(o,pg);
+      o.start(t); o.stop(t+dur+0.04);
+    }
+  }
+
+  /* pace is 1 for a deliberate tap, down toward ~0.3 for a fast swipe —
+     every pop voice leans on it so tearing through a cluster doesn't stack
+     into a wall of full-volume noise. */
+  function popNote(b,pace){
+    pace=pace==null?1:pace;
+    var glass=Math.max(0,Math.min(1,(46-b.r)/32));
+    var p=panOf(b), root=chordRootIdx();
+    var mel=snapToChord(degreeFor(b.r),root);
+    var f=scaleFreq(mel);
+    if(voiceKind==='bubble'){
+      popBubble(f,p,glass,pace);
+    } else if(voiceKind==='wood'){
+      popWood(f,p,glass,pace);
+    } else if(voiceKind==='bell'){
+      note(f,{pan:p,glass:0.8,vol:0.27*pace,dur:0.42+glass*0.3,simple:true,echo:false});
+      noise(0.06*pace,0.045,2000+(48-b.r)*40,p);
+    } else {
+      // rapid pops (a swipe) get a single, dry voice instead of a sustained
+      // stack — and even a deliberate tap never opens more than two, since
+      // the chain's weight is carried by the backing track filling out now
+      // rather than by every individual pop growing its own chord
+      var rapid=pace<0.6;
+      var stack=rapid?1:Math.min(2,1+Math.floor(streak/6));
+      var sus=rapid?0.7:1+Math.min(streak,8)*0.05;
+      for(var v=0;v<stack;v++){
+        if(v>0&&voices>10) break;
+        note(scaleFreq(mel-2*v),{
+          when:v*0.012, simple:v>0,
+          pan:Math.max(-0.92,Math.min(0.92,p+(v?((v%2?-1:1)*0.1*v):0))),
+          glass:Math.max(0.05,glass-v*0.2),
+          vol:(0.27+glass*0.05)*(v===0?1:0.5/Math.sqrt(v+1))*pace,
+          dur:(0.42+glass*0.95)*sus*(1+v*0.28)
+        });
+      }
+      noise(0.065*pace,0.05,1800+(48-b.r)*45,p);
+    }
+    if(streak>=2){ chainLift(); harmony(b,pace); }
+  }
+  // The sound of popping a pearl: a rising three-note glide plus a low
+  // bass note, always the same bright chord tone regardless of the bubble's size.
+  function pearlSnd(b,pace){
+    pace=pace==null?1:pace;
+    var p=panOf(b), root=chordRootIdx(), d=snapToChord(degreeFor(15),root);
+    note(scaleFreq(d),  {when:0,   dur:0.55,glass:0.9,vol:0.15*pace,pan:p});
+    note(scaleFreq(d+2),{when:0.07,dur:0.6, glass:0.9,vol:0.14*pace,pan:p});
+    note(scaleFreq(d+4),{when:0.14,dur:1.2, glass:1,  vol:0.16*pace,pan:p});
+    note(freqOf(midiFor(root)-12),{when:0.02,dur:1.4,glass:0.2,vol:0.1*pace,simple:true,slide:false});
+    noise(0.05*pace,0.12,4400,p);
+    if(streak>=2){ chainLift(); harmony(b,pace); }
+  }
+  // The sound of popping a cluster bubble: two quick tones plus a low
+  // "thunk" — busier than a plain pop since it's about to split into two.
+  function clusterSnd(b,pace){
+    pace=pace==null?1:pace;
+    var p=panOf(b), root=chordRootIdx(), d=snapToChord(degreeFor(b.r),root);
+    note(scaleFreq(d),  {dur:0.85,glass:0.25,vol:0.17*pace,pan:p});
+    note(scaleFreq(d+2),{when:0.015,dur:0.85,glass:0.35,vol:0.12*pace,pan:p,simple:true});
+    note(freqOf(midiFor(root)-24),{dur:0.5,glass:0,vol:0.1*pace,pan:p,echo:false,simple:true});
+    if(streak>=2){ chainLift(); harmony(b,pace); }
+  }
+  // every fifth link: a rising run through the chord, longer as the chain grows
+  var lastSwell=0;
+  // Plays the ascending flourish on every chain milestone (×5, ×10, …),
+  // throttled so a seahorse jumping several milestones at once can't
+  // trigger it repeatedly in the same instant.
+  function chainSwell(tier,pace){
+    var now=performance.now()/1000;
+    if(now-lastSwell<1.1) return;
+    lastSwell=now;
+    pace=pace==null?1:pace;
+    // four short notes, not six long ones over a bass note and a wash of
+    // noise: the run reads as a flourish rather than a second chord sitting
+    // on top of the backing track for a second and a half
+    var root=chordRootIdx()+5, n=Math.min(4,2+Math.floor(tier/3));
+    for(var i=0;i<n;i++){
+      note(scaleFreq(root+i*2),{when:i*0.065,dur:0.55+i*0.09,glass:Math.min(1,0.85+i*0.03),
+        vol:(0.05-i*0.006)*pace,slide:false,simple:true,echo:false,pan:i%2?0.3:-0.3});
+    }
+  }
+  /* How fast pops are landing: 1 for a deliberate tap, down to ~0.3 for a
+     swipe tearing through a cluster in one gesture. Everything that fires
+     per-pop — the pop's own voice, the harmony under it, a chord change —
+     reads this same clock, so a big swipe stays one clean sound instead of
+     a hundred full-volume voices and their reverb piling on top of each
+     other and refusing to die down. */
+  var lastPopT=0;
+  function popPace(){
+    var now=performance.now()/1000, gap=now-lastPopT;
+    lastPopT=now;
+    return Math.max(0.28,Math.min(1,gap/0.11));
+  }
+  /* One quiet chord tone under a pop's melody note — never a stack. This
+     had no rate limit at all and layered up to three notes at a time, each
+     lasting up to a second, on *every* pop: a decent chain meant a dozen
+     of them alive at once, which is what buried the pops under their own
+     harmony. Now it's a single short note with a floor on how often it can
+     fire, and it bows out earlier when pops are coming fast. */
+  var lastHarm=0;
+  function harmony(b,pace){
+    pace=pace==null?1:pace;
+    if(streak<2||voices>7||pace<0.5) return;   // a fast swipe already has plenty of voice; don't pile on
+    var now=performance.now()/1000;
+    if(now-lastHarm<0.19) return;
+    lastHarm=now;
+    var p=panOf(b), root=chordRootIdx();
+    var mel=snapToChord(degreeFor(b.r),root);
+    note(scaleFreq(mel-2),{when:0.03,dur:0.42*pace,glass:0.85,
+      vol:0.022*Math.min(1,0.55+streak*0.04)*pace,simple:true,slide:false,echo:false,
+      pan:Math.max(-0.9,Math.min(0.9,p*0.6))});
+  }
+  /* An air pocket opening: a bright rising figure and a breath of noise. */
+  function airSnd(b,pace){
+    pace=pace==null?1:pace;
+    var p=b?panOf(b):0, root=chordRootIdx();
+    note(scaleFreq(root+2), {when:0,    dur:0.7,glass:1,vol:0.15*pace,pan:p});
+    note(scaleFreq(root+4), {when:0.06, dur:0.8,glass:1,vol:0.14*pace,pan:p,simple:true});
+    note(scaleFreq(root+6), {when:0.12, dur:1.0,glass:1,vol:0.13*pace,pan:p,simple:true});
+    note(scaleFreq(root+9), {when:0.18, dur:1.6,glass:1,vol:0.13*pace,pan:p,simple:true});
+    noise(0.07*pace,0.34,900,p);
+    // every other kind feeds the chain's energy — air was the one gap in it
+    if(streak>=2){ chainLift(); harmony(b,pace); }
+  }
+  // Plays when a held breath (from a pearl) saves a chain that would
+  // otherwise have broken — a small, reassuring two-note chime.
+  function heldSnd(){
+    note(scaleFreq(9),{dur:1.1,glass:1,vol:0.13,slide:false,simple:true});
+    note(scaleFreq(7),{when:0.08,dur:1.3,glass:0.9,vol:0.1,slide:false,simple:true});
+    noise(0.04,0.1,3800);
+  }
+  /* one second to the surface: a double tick where the bubble is */
+  function warnSnd(p){
+    note(scaleFreq(13),{dur:0.16,vol:0.062,glass:1,pan:p,echo:false,simple:true,slide:false});
+    note(scaleFreq(13),{when:0.13,dur:0.16,vol:0.05,glass:1,pan:p,echo:false,simple:true,slide:false});
+  }
+  // The sour sawtooth stab for hitting ink — deliberately harsh, unlike
+  // every consonant, chord-aligned sound elsewhere.
+  function inkSnd(b,pace){
+    var a=ac(); if(!a) return;
+    pace=pace==null?1:pace;
+    var t=a.currentTime;
+    var o=a.createOscillator(), g=a.createGain(), f=a.createBiquadFilter();
+    f.type='lowpass'; f.frequency.setValueAtTime(900,t);
+    f.frequency.exponentialRampToValueAtTime(170,t+0.34);
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(freqOf(midiFor(0)-11),t);
+    o.frequency.exponentialRampToValueAtTime(freqOf(midiFor(0)-24),t+0.34);
+    g.gain.setValueAtTime(0.14*pace,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.4);
+    var p=panner(a,b?panOf(b):0);
+    o.connect(f); f.connect(g); g.connect(p); p.connect(bus);
+    o.onended=function(){ o.disconnect(); f.disconnect(); g.disconnect(); p.disconnect(); };
+    o.start(t); o.stop(t+0.42);
+  }
+  // A short falling drone for a missed bubble — quieter and plainer than
+  // ink, since missing costs a breath but isn't a mistake worth punishing hard.
+  function missSnd(){
+    note(freqOf(midiFor(0)-13),{dur:0.5,glass:0.05,vol:0.13,slide:false,echo:false});
+    note(freqOf(midiFor(0)-24),{when:0.16,dur:0.9,glass:0,vol:0.12,slide:false});
+    noise(0.06,0.22,260);
+  }
+  // A tiny click for tapping empty water (breaks the chain silently).
+  function blip(){ noise(0.022,0.045,850); }
+
+  /* Builds the whole backing track once: a bass, a kick, a hat and clap
+     sharing one noise source, a three-oscillator chord stab and a top
+     line. Nothing here is ever created again — the loop plays by drawing
+     envelopes on these fixed nodes, which is the cheap way to run music
+     under a game that is already spawning oscillators every time you pop
+     a bubble. */
+  function buildMusic(a){
+    var m={};
+    m.out=a.createGain(); m.out.gain.value=0.0001; m.out.connect(comp);
+
+    // Bass: a triangle rolled off well below where the pops sing, so the
+    // groove is felt underneath them rather than heard across them.
+    m.bassF=a.createBiquadFilter(); m.bassF.type='lowpass';
+    m.bassF.frequency.value=640; m.bassF.Q.value=0.7; m.bassF.connect(m.out);
+    m.bassG=a.createGain(); m.bassG.gain.value=0; m.bassG.connect(m.bassF);
+    m.bassO=a.createOscillator(); m.bassO.type='triangle'; m.bassO.frequency.value=92;
+    m.bassO.connect(m.bassG); m.bassO.start();
+
+    // Kick: one sine with the floor dropping out from under its pitch.
+    m.kickG=a.createGain(); m.kickG.gain.value=0; m.kickG.connect(m.out);
+    m.kickO=a.createOscillator(); m.kickO.type='sine'; m.kickO.frequency.value=48;
+    m.kickO.connect(m.kickG); m.kickO.start();
+
+    /* One looping noise buffer gated two different ways — a bright tick for
+       the hat, a band-limited burst for the clap. Both gates rest at a true
+       zero, never at the 0.0001 an exponential ramp has to stop at, so
+       there is no bed of noise sitting under the track between hits. That
+       distinction is the whole difference between percussion and the
+       static the old ambient wash turned into on a phone speaker. */
+    var nb=a.createBuffer(1,Math.floor(a.sampleRate*0.5),a.sampleRate), nd=nb.getChannelData(0);
+    for(var i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+    m.noise=a.createBufferSource(); m.noise.buffer=nb; m.noise.loop=true;
+    m.hatF=a.createBiquadFilter(); m.hatF.type='highpass'; m.hatF.frequency.value=7200;
+    m.hatG=a.createGain(); m.hatG.gain.value=0;
+    m.noise.connect(m.hatF); m.hatF.connect(m.hatG); m.hatG.connect(m.out);
+    m.clapF=a.createBiquadFilter(); m.clapF.type='bandpass';
+    m.clapF.frequency.value=1700; m.clapF.Q.value=1.4;
+    m.clapG=a.createGain(); m.clapG.gain.value=0;
+    m.noise.connect(m.clapF); m.clapF.connect(m.clapG); m.clapG.connect(m.out);
+    m.noise.start();
+
+    // Chord stab: three slightly detuned squares through one filter.
+    m.stabF=a.createBiquadFilter(); m.stabF.type='lowpass';
+    m.stabF.frequency.value=2400; m.stabF.Q.value=0.8; m.stabF.connect(m.out);
+    m.stabG=a.createGain(); m.stabG.gain.value=0; m.stabG.connect(m.stabF);
+    m.stabO=[];
+    for(var s=0;s<3;s++){
+      var so=a.createOscillator(); so.type='square'; so.frequency.value=220;
+      so.detune.value=(s-1)*5;
+      var sg=a.createGain(); sg.gain.value=0.33;
+      so.connect(sg); sg.connect(m.stabG); so.start();
+      m.stabO.push(so);
+    }
+
+    // The top line, only unlocked by a long chain.
+    m.arpF=a.createBiquadFilter(); m.arpF.type='lowpass';
+    m.arpF.frequency.value=3400; m.arpF.Q.value=0.9; m.arpF.connect(m.out);
+    m.arpG=a.createGain(); m.arpG.gain.value=0; m.arpG.connect(m.arpF);
+    m.arpO=a.createOscillator(); m.arpO.type='square'; m.arpO.frequency.value=440;
+    m.arpO.connect(m.arpG); m.arpO.start();
+
+    music=m;
+  }
+  /* One plucked envelope on a permanent gain node. The way down is a
+     linear ramp rather than an exponential one because an exponential
+     curve can never actually arrive at zero — on a node that is never
+     torn down, that leftover trickle is a voice droning quietly forever. */
+  function pluck(g,t,peak,dec){
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(0,t);
+    g.linearRampToValueAtTime(peak,t+0.005);
+    g.linearRampToValueAtTime(0,t+dec);
+  }
+  /* How much of the arrangement is unlocked, 0…1. Depth sets the floor and
+     the chain does the rest, so the track thickens both as you get deeper
+     and as you play well — and thins straight back out when a chain breaks. */
+  function musicEnergyTarget(){
+    return Math.min(1, 0.14 + Math.min(zoneIdx,5)*0.05 + chainEnergy*0.62);
+  }
+  /* Draws one 16th-note step of the loop at an exact time on the audio
+     clock. Parts come in at thresholds rather than all at once, and each
+     one reads the live scale/zone, so the same patterns turn minor and
+     darken as the dive goes deeper without a second set of tables. */
+  function musicSchedule(s,t){
+    var m=music, i=s%16, bar=Math.floor(s/16);
+    var minor=!!zone().minor;
+    var prog=minor?PROG_MIN:PROG_MAJ, triad=minor?TRIAD_MIN:TRIAD_MAJ;
+    var cr=prog[bar%prog.length], e=energy;
+
+    if(P_KICK[i]){
+      m.kickO.frequency.cancelScheduledValues(t);
+      m.kickO.frequency.setValueAtTime(155,t);
+      m.kickO.frequency.exponentialRampToValueAtTime(46,t+0.075);
+      pluck(m.kickG.gain,t,0.15,0.15);
+    }
+    if(P_BASS[i]>=0){
+      m.bassO.frequency.setValueAtTime(freqOf(midiFor(cr+P_BASS[i])-12),t);
+      pluck(m.bassG.gain,t,0.10,STEP16*2.1);
+    }
+    if(e>=0.22 && P_HAT[i]) pluck(m.hatG.gain,t,0.014+e*0.010,0.035);
+    if(e>=0.45 && P_CLAP[i]) pluck(m.clapG.gain,t,0.028,0.085);
+    if(e>=0.62 && P_STAB[i]>=0){
+      for(var k=0;k<3;k++) m.stabO[k].frequency.setValueAtTime(freqOf(midiFor(cr+triad[k])),t);
+      pluck(m.stabG.gain,t,0.024,0.20);
+    }
+    // the top line alternates register bar to bar so it reads as a tune
+    // going somewhere rather than the same four notes over and over
+    if(e>=0.80 && P_ARP[i]>=0){
+      m.arpO.frequency.setValueAtTime(freqOf(midiFor(cr+P_ARP[i]+(bar%2?2:0))+12),t);
+      pluck(m.arpG.gain,t,0.026,0.11);
+    }
+    energy += (musicEnergyTarget()-energy)*0.09;
+  }
+  /* The lookahead scheduler: every 45ms, queue whatever steps fall inside
+     the next 0.18s. Timer drift can't reach the music because the timer
+     only decides *when to queue*; the times themselves come off the audio
+     clock, which is what keeps the groove steady while the game is busy
+     drawing a few hundred particles. */
+  function musicTick(){
+    var a=AC; if(!a||!music||!musicOn) return;
+    var ahead=a.currentTime+0.18, guard=0;
+    while(musicNext<ahead && guard++<64){
+      musicSchedule(musicStep,musicNext);
+      musicStep=(musicStep+1)%64;              // four bars
+      musicNext+=STEP16;
+    }
+  }
+  // Starts or stops the backing track. Starting always restarts at the top
+  // of bar one, so a dive begins on a downbeat rather than wherever the
+  // loop happened to be.
+  function musicSet(on){
+    on=!!on&&soundOn;
+    if(on) ac();
+    var a=AC, m=music; if(!a||!m){ musicOn=on; return; }
+    var t=a.currentTime;
+    if(on&&!musicOn){
+      musicStep=0; musicNext=t+0.08; musicStart=musicNext;
+      energy=musicEnergyTarget();
+      musicOn=true;
+      clearInterval(musicTimer);
+      musicTimer=setInterval(musicTick,45);
+      musicTick();
+    } else if(!on&&musicOn){
+      musicOn=false;
+      clearInterval(musicTimer); musicTimer=null;
+    }
+    m.out.gain.cancelScheduledValues(t);
+    m.out.gain.setValueAtTime(m.out.gain.value,t);
+    m.out.gain.setTargetAtTime(on?1:0.0001,t,on?0.35:0.25);
+    musicTune();
+  }
+  // Depth doesn't change the tune, only its colour: deeper zones roll the
+  // top off every part, so the Trench gets heavier without the loop
+  // losing its bounce (and the scale itself turns minor, via zone()).
+  function musicTune(){
+    var a=AC, m=music; if(!a||!m) return;
+    var t=a.currentTime, z=Math.min(5,zoneIdx);
+    m.bassF.frequency.setTargetAtTime(640-z*55,t,0.8);
+    m.stabF.frequency.setTargetAtTime(2400-z*180,t,0.8);
+    m.arpF.frequency.setTargetAtTime(3400-z*230,t,0.8);
+  }
+
+  soundBtn.addEventListener('click',function(){
+    soundOn=!soundOn;
+    soundBtn.setAttribute('aria-pressed', soundOn?'true':'false');
+    try{ localStorage.setItem('st.sound', soundOn?'1':'0'); }catch(e){}
+    if(soundOn){
+      note(scaleFreq(5),{dur:0.7,vol:0.17,glass:0.8});
+      note(scaleFreq(7),{when:0.09,dur:0.9,vol:0.14,glass:0.9});
+      if(STATE==='playing') musicSet(true);
+    } else { musicSet(false); }
+  });
+
+  /* ════════ THE VISITOR ════════
+     A small lantern whale that follows a good chain. The deeper it finds
+     you, the bluer it runs and the more lights it carries along its back.
+     Break the chain while it's watching and it droops, dims and cries. */
+  var alien=null, alienCooldown=10, puffs=[];
+  var ALIEN_LIFE=13.5;
+  // [light, deep] body colour and lantern count, one per zone
+  var VISITOR=[
+    {cA:[150,245,230], cB:[70,190,200],  spots:0},
+    {cA:[140,232,240], cB:[64,170,208],  spots:2},
+    {cA:[150,220,255], cB:[72,150,220],  spots:3},
+    {cA:[168,196,255], cB:[92,120,220],  spots:5},
+    {cA:[196,176,255], cB:[122,96,210],  spots:7},
+    {cA:[226,168,240], cB:[150,84,180],  spots:9}
+  ];
+  // Formats an [r,g,b] triple plus an alpha into a CSS/canvas rgba() string.
+  function rgba(c,a){ return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+
+  // Rolls the dice on spawning the whale at a chain milestone: only if one
+  // isn't already around, its cooldown has elapsed, and the chain is long
+  // enough (tier>=2), with rising odds the longer chains get.
+  function maybeAlien(tier){
+    if(alien||alienCooldown>0||tier<2) return;
+    if(rnd() > 0.26+(tier-2)*0.1) return;
+    var side=rnd()<0.5?-1:1;
+    alien={
+      side:side, face:-side,
+      x: side<0 ? W*(0.2+rnd()*0.14) : W*(0.66+rnd()*0.14),
+      y: H*(0.34+rnd()*0.3),
+      s: Math.max(18,Math.min(40,Math.min(W,H)*0.065)),
+      t:0, ph:rnd()*6.28, wph:rnd()*6.28,
+      blink:1.5+rnd()*3, blinkT:0, tilt:0, sang:false, sad:0, tearT:0, puffT:1.5
+    };
+    alienCooldown=26+rnd()*22;
+    alienHello();
+  }
+  // Two-note greeting played the moment the whale appears.
+  function alienHello(){
+    var root=chordRootIdx(), p=alien?alien.side*0.5:0;
+    note(scaleFreq(root+3),{dur:1.5,vol:0.085,glass:0.95,slide:false,simple:true,pan:p});
+    note(scaleFreq(root+5),{when:0.16,dur:1.9,vol:0.075,glass:1,slide:false,simple:true,pan:p});
+  }
+  // The whale's contented "song," once it's been around a while (see drawAlien).
+  function alienSing(){
+    var root=chordRootIdx(), p=alien?alien.side*0.4:0;
+    note(scaleFreq(root+7),{dur:2.4,vol:0.07,glass:1,slide:false,simple:true,pan:p});
+    note(scaleFreq(root+9),{when:0.22,dur:2.6,vol:0.05,glass:1,slide:false,simple:true,pan:p});
+  }
+  // Marks the whale sad (droops/dims/tears in the next drawAlien frames)
+  // and plays its two-note cry, when a chain breaks while it's watching.
+  function alienSad(){
+    if(!alien) return;
+    alien.sad=1; alien.tearT=0;
+    // droops from the chord that was actually playing, not a fixed pitch —
+    // otherwise it can land a step or two outside whatever key the chain
+    // had reached, which reads as a wrong note rather than a sad one
+    var root=chordRootIdx(), p=alien.side*0.4;
+    note(scaleFreq(root+3),{dur:1.6,vol:0.08,glass:0.55,slide:false,simple:true,pan:p});
+    note(scaleFreq(root+1),{when:0.3,dur:2.1,vol:0.07,glass:0.4,slide:false,simple:true,pan:p});
+  }
+
+  /* Paints the whale facing +x at the origin of g (always ctx, whose glow
+     sprites the lanterns share); s is half its body height. */
+  function paintVisitor(g,s,V,o){
+    var ph=o.ph, sad=o.sad, blink=o.blink;
+    var cA=V.cA, cB=V.cB, edge=rgba(shade(cB),PAL.dim?0.75:0.6);
+    var beat=Math.sin(ph*2.2)*(1-sad*0.6), tailY=beat*0.16*s;
+    g.lineCap='round'; g.lineJoin='round';
+
+    // flukes, hinged at the tail stock
+    g.save(); g.translate(-1.5*s,tailY); g.rotate(beat*0.32);
+    g.beginPath();
+    g.moveTo(0,0);
+    g.quadraticCurveTo(-0.3*s,-0.42*s, -0.72*s,-0.5*s);
+    g.quadraticCurveTo(-0.5*s,-0.12*s, -0.56*s,0);
+    g.quadraticCurveTo(-0.5*s,0.12*s, -0.72*s,0.5*s);
+    g.quadraticCurveTo(-0.3*s,0.42*s, 0,0);
+    g.fillStyle=rgba(cB,0.5); g.fill();
+    g.strokeStyle=edge; g.lineWidth=Math.max(1,s*0.05); g.stroke();
+    g.restore();
+
+    // body
+    g.beginPath();
+    g.moveTo(1.55*s,0.06*s);
+    g.bezierCurveTo(1.5*s,-0.56*s, 0.7*s,-0.74*s, 0,-0.62*s);
+    g.bezierCurveTo(-0.7*s,-0.5*s, -1.2*s,-0.2*s+tailY*0.5, -1.52*s,-0.09*s+tailY);
+    g.lineTo(-1.52*s,0.09*s+tailY);
+    g.bezierCurveTo(-1.1*s,0.3*s+tailY*0.5, -0.5*s,0.62*s, 0.2*s,0.6*s);
+    g.bezierCurveTo(0.9*s,0.58*s, 1.52*s,0.48*s, 1.55*s,0.06*s);
+    g.closePath();
+    var bg=g.createLinearGradient(0,-0.72*s,0,0.62*s);
+    bg.addColorStop(0,rgba(cB,0.62-sad*0.12));
+    bg.addColorStop(0.55,rgba(cA,0.46-sad*0.1));
+    bg.addColorStop(1,rgba(PAL.core,0.72-sad*0.2));
+    g.fillStyle=bg; g.fill();
+    g.strokeStyle=edge; g.lineWidth=Math.max(1,s*0.06); g.stroke();
+
+    // throat pleats
+    g.strokeStyle=rgba(shade(cB),0.24); g.lineWidth=Math.max(0.8,s*0.03);
+    for(var i=0;i<3;i++){
+      g.beginPath();
+      g.moveTo((1.28-i*0.1)*s,(0.36+i*0.06)*s);
+      g.quadraticCurveTo((0.62-i*0.05)*s,(0.52+i*0.05)*s, (-0.05-i*0.08)*s,(0.5-i*0.02)*s);
+      g.stroke();
+    }
+
+    // pectoral fin, paddling
+    g.save(); g.translate(0.42*s,0.4*s); g.rotate(0.5+Math.sin(ph*2.2+1.1)*0.35*(1-sad*0.7)+sad*0.5);
+    g.beginPath(); g.ellipse(-0.28*s,0,0.34*s,0.12*s,0,0,6.283);
+    g.fillStyle=rgba(cB,0.55); g.fill();
+    g.strokeStyle=edge; g.lineWidth=Math.max(1,s*0.045); g.stroke();
+    g.restore();
+
+    // lanterns along the back
+    for(var k=0;k<V.spots;k++){
+      var u=V.spots>1 ? k/(V.spots-1) : 0.5;
+      var sx=(0.75-u*1.9)*s, sy=(-0.44+u*u*0.3)*s;
+      var pl=(0.55+0.45*Math.sin(ph*1.7+k*0.9))*(1-sad*0.7);
+      g.save(); g.globalCompositeOperation='lighter';
+      stampGlow(PAL.mote[0],0.5,0.5,sx,sy,0.26*s,0.55*pl);
+      g.restore();
+      g.beginPath(); g.arc(sx,sy,0.065*s,0,6.283);
+      g.fillStyle=rgba([255,250,214],0.5+0.5*pl); g.fill();
+    }
+
+    // blush, eye, mouth
+    g.fillStyle='rgba(255,150,170,'+(0.28-sad*0.16)+')';
+    g.beginPath(); g.ellipse(1.12*s,0.2*s,0.13*s,0.08*s,0,0,6.283); g.fill();
+
+    var ex=0.98*s, ey=-0.1*s+sad*0.04*s, er=0.13*s;
+    g.fillStyle='rgba(5,28,38,.9)';
+    if(blink>0){
+      g.fillRect(ex-er,ey-er*0.12,er*2,er*0.24);
+    } else {
+      g.beginPath(); g.ellipse(ex,ey,er,er*(1.1-sad*0.25),0,0,6.283); g.fill();
+      g.fillStyle='rgba(255,255,255,'+(0.9-sad*0.35)+')';
+      g.beginPath(); g.arc(ex+er*0.3,ey-er*0.38,er*0.36,0,6.283); g.fill();
+      if(sad>0.05){
+        // a heavy lid
+        g.strokeStyle=edge; g.lineWidth=Math.max(1,s*0.05);
+        g.beginPath(); g.moveTo(ex-er*1.2,ey-er*(1.1-sad*0.9)); g.lineTo(ex+er*1.2,ey-er*1.25); g.stroke();
+      }
+    }
+    g.strokeStyle=edge; g.lineWidth=Math.max(1,s*0.045);
+    g.beginPath(); g.moveTo(1.46*s,0.22*s);
+    g.quadraticCurveTo(1.26*s,(0.34-sad*0.2)*s, 1.02*s,0.28*s);
+    g.stroke();
+  }
+
+  // Advances and draws the whale (and its breath-puff/tear particles) for
+  // one frame: movement, fade in/out over its lifetime, blinking, singing
+  // once settled in, and the sad/crying state after a broken chain.
+  function drawAlien(dt){
+    for(var q=puffs.length-1;q>=0;q--){
+      var pf=puffs[q]; pf.life+=dt; pf.y-=pf.vy*dt; pf.x+=Math.sin(pf.life*6+pf.ph)*6*dt;
+      if(pf.life>=pf.max){ puffs.splice(q,1); continue; }
+      ctx.beginPath(); ctx.arc(pf.x,pf.y,pf.r,0,6.283);
+      ctx.strokeStyle=rgba(PAL.dim?PAL.airRing:[230,250,255],0.6*(1-pf.life/pf.max));
+      ctx.lineWidth=1; ctx.stroke();
+    }
+    if(!alien) return;
+    var A=alien;
+    A.t+=dt; A.ph+=dt*1.15; A.wph+=dt*0.5; A.blinkT+=dt;
+    if(A.t>ALIEN_LIFE){ alien=null; return; }
+    if(!A.sang && A.t>6.2){ A.sang=true; alienSing(); }
+    var alpha = A.t<1.2 ? A.t/1.2 : (A.t>ALIEN_LIFE-1.8 ? Math.max(0,(ALIEN_LIFE-A.t)/1.8) : 1);
+    alpha*=0.94;
+    if(alpha<=0.01) return;
+
+    var V=VISITOR[Math.min(VISITOR.length-1,zoneIdx)];
+    if(A.sad>0) A.sad=Math.max(0,A.sad-dt/4.2);
+    var sad=A.sad>0?Math.min(1,A.sad*1.6):0;
+    var s=A.s*(1+zoneIdx*0.05);
+    var slow=1-sad*0.55;
+    var vx=(Math.cos(A.wph)*30+Math.sin(A.wph*0.53+1.7)*14)*slow;
+    var vy=(Math.sin(A.wph*0.77)*14-5)*slow+sad*9;
+    A.x+=vx*dt; A.y+=vy*dt;
+    var padX=s*2.4, padY=s*1.4;
+    if(A.x<padX) A.x+=(padX-A.x)*Math.min(1,dt*2.5);
+    if(A.x>W-padX) A.x-=(A.x-(W-padX))*Math.min(1,dt*2.5);
+    if(A.y<padY) A.y+=(padY-A.y)*Math.min(1,dt*2.5);
+    if(A.y>H-padY) A.y-=(A.y-(H-padY))*Math.min(1,dt*2.5);
+    // turn to face the way it swims; passing through zero reads as a turn
+    if(Math.abs(vx)>6) A.face+=((vx>0?1:-1)-A.face)*Math.min(1,dt*2.2);
+    var pitch=Math.max(-0.3,Math.min(0.3,vy/140))+sad*0.18;
+    A.tilt+=(pitch-A.tilt)*Math.min(1,dt*2);
+    var cx=A.x, cy=A.y+Math.sin(A.ph*0.7)*3, dir=A.face>=0?1:-1;
+
+    ctx.save(); ctx.globalAlpha=alpha; ctx.globalCompositeOperation='lighter';
+    stampGlow(V.cA,0.45,0.36,cx,cy,s*3.2,0.14*(1-sad*0.6));
+    ctx.restore();
+
+    if(!reduce && sad<0.3){
+      A.puffT-=dt;
+      if(A.puffT<=0){
+        A.puffT=2.2+Math.random()*2.4;
+        for(var n=0;n<3;n++) puffs.push({x:cx+dir*0.72*s*Math.abs(A.face),y:cy-0.7*s,r:1.6+Math.random()*2.2,
+          vy:26+Math.random()*22+n*8,life:-n*0.12,max:1.4,ph:Math.random()*6.28});
+      }
+    }
+    if(!reduce && sad>0.35){
+      A.tearT-=dt;
+      if(A.tearT<=0){
+        A.tearT=0.5+Math.random()*0.5;
+        bits.push({x:cx+A.face*0.98*s,y:cy,vx:0,vy:22+Math.random()*12,r:1.5+Math.random()*1.1,
+                   life:0,max:1.1,c:PAL.dim?[40,110,180]:[176,226,255]});
+      }
+    }
+
+    if(A.blinkT>A.blink+0.16){ A.blinkT=0; A.blink=1.6+Math.random()*3.4; }
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.translate(cx,cy); ctx.rotate(A.tilt*dir); ctx.scale(A.face,1);
+    paintVisitor(ctx,s,V,{ph:A.ph, sad:sad, blink:A.blinkT>A.blink ? 1 : 0});
+    ctx.restore();
+  }
+
+  /* ════════ BACKGROUND ════════ */
+  var snow=[], motes=[], kelp=[], shafts=[], fish=null, fishTimer=6, levi=null, leviTimer=26;
+  var layerA=[0,0,0,0,0,0];
+
+  // (Re)randomizes every background layer's particles/kelp/shafts/murk —
+  // called on load and whenever the field is resized enough to matter.
+  function seedScene(){
+    var i;
+    shafts=[];
+    for(i=0;i<5;i++) shafts.push({x:Math.random(),w:0.06+Math.random()*0.12,ph:Math.random()*6.28,sp:0.05+Math.random()*0.09});
+    snow=[];
+    var sn=reduce?22:48;
+    for(i=0;i<sn;i++) snow.push({x:Math.random()*W,y:Math.random()*H,r:0.5+Math.random()*1.9,v:3+Math.random()*11,ph:Math.random()*6.28});
+    motes=[];
+    var mn=reduce?9:20;
+    for(i=0;i<mn;i++) motes.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2.2,ph:Math.random()*6.28,sp:0.5+Math.random()*1.2,vy:-2-Math.random()*6,vx:(Math.random()-0.5)*6});
+    kelp=[];
+    var kn=reduce?5:9;
+    for(i=0;i<kn;i++) kelp.push({x:(i+0.5)/kn*W+(Math.random()-0.5)*40,h:H*(0.25+Math.random()*0.4),w:4+Math.random()*7,ph:Math.random()*6.28,sp:0.3+Math.random()*0.35});
+    murk=[];
+    for(i=0;i<3;i++) murk.push({x:Math.random()*W,y:Math.random()*H,w:W*(0.5+Math.random()*0.55),h:H*(0.1+Math.random()*0.14),vx:(Math.random()<0.5?-1:1)*(5+Math.random()*9),ph:Math.random()*6.28});
+  }
+
+  var waterGrad=null, gradKey='', shaftGrad=null, shaftKey='';
+  // Fills the field with the water gradient for the current zone, blending
+  // smoothly into the next zone's colours as score approaches it. Caches
+  // the gradient object and only rebuilds it when the blend actually moves.
+  function water(){
+    var i=zoneIdx, z=ZONES[i], nz=ZONES[Math.min(ZONES.length-1,i+1)];
+    var wz=PAL.water[i], wnz=PAL.water[Math.min(PAL.water.length-1,i+1)];
+    var span=(nz.at-z.at)||1;
+    var t=Math.max(0,Math.min(1,(score-z.at)/span));
+    var key=themeName+'|'+i+'|'+Math.round(t*20)+'|'+Math.round(H);
+    if(key!==gradKey||!waterGrad){
+      gradKey=key;
+      var cTop=mixC(wz[0],wnz[0],t), cBot=mixC(wz[1],wnz[1],t);
+      waterGrad=ctx.createLinearGradient(0,0,0,H);
+      waterGrad.addColorStop(0, rgba(cTop,1));
+      waterGrad.addColorStop(0.46, rgba(mixC(cTop,cBot,0.62),1));
+      waterGrad.addColorStop(1, rgba(cBot,1));
+    }
+    ctx.fillStyle=waterGrad; ctx.fillRect(0,0,W,H);
+  }
+  /* Radial fills — glows, and the glassy bodies of bubbles — are rendered
+     once per colour and stamped with drawImage. Building fresh gradients for
+     every bubble and mote, every frame, was the steadiest cost in the draw
+     loop. Keys carry the colours, so the two themes keep separate entries. */
+  var spriteCache={};
+  // Renders (once) and caches a small off-screen canvas via the given
+  // paint callback, keyed by a string so identical requests reuse it.
+  function sprite(key,size,paint){
+    var s=spriteCache[key];
+    if(!s){
+      s=document.createElement('canvas'); s.width=s.height=size;
+      paint(s.getContext('2d'),size/2);
+      spriteCache[key]=s;
+    }
+    return s;
+  }
+  // A cached radial-gradient glow sprite of a given colour, for stamping
+  // via stampGlow() instead of building a fresh gradient every frame.
+  function glowSprite(c,mid,midA){
+    return sprite('glow|'+c+'|'+mid+'|'+midA,128,function(g,R){
+      var gr=g.createRadialGradient(R,R,0,R,R,R);
+      gr.addColorStop(0,rgba(c,1)); gr.addColorStop(mid,rgba(c,midA)); gr.addColorStop(1,rgba(c,0));
+      g.fillStyle=gr; g.fillRect(0,0,R*2,R*2);
+    });
+  }
+  // glass bodies: the highlight sits up and to the left of centre
+  // A cached glassy-sphere sprite (a radial gradient clipped to a circle)
+  // built from an arbitrary list of colour stops — the shared base every
+  // bubble body sprite (film/ink/treasure) is built from.
+  function bodySprite(key,stops){
+    return sprite(key,192,function(g,R){
+      var gr=g.createRadialGradient(R*0.7,R*0.65,R*0.05,R,R,R);
+      for(var i=0;i<stops.length;i++) gr.addColorStop(stops[i][0],stops[i][1]);
+      g.fillStyle=gr; g.beginPath(); g.arc(R,R,R,0,6.283); g.fill();
+    });
+  }
+  // The glassy body sprite for a plain bubble (or a pearl, which is more opaque and golden).
+  function filmSprite(c,pearl){
+    var sp=PAL.spec, fa=PAL.filmA;
+    return bodySprite('film|'+c+'|'+pearl+'|'+sp+'|'+fa,[
+      [0,'rgba(255,255,255,'+(0.20*sp)+')'],
+      [0.45,rgba(c,(pearl?0.14:0.045)*fa)],
+      [0.82,rgba(c,(pearl?0.32:0.13)*fa)],
+      [0.97,rgba(c,pearl?0.8:0.5)],
+      [1,'rgba(255,255,255,0)']]);
+  }
+  // The dark, murky body sprite for an ink bubble.
+  function inkSprite(){
+    var o=PAL.inkOrb;
+    return bodySprite('ink|'+o.join('|'),[[0,rgba(o[0],.95)],[0.55,rgba(o[1],.92)],[1,rgba(o[2],.88)]]);
+  }
+  // The glowing body sprite shared by all three treasure bubbles (the
+  // treasure's own colour tints it; paintItem() draws the icon on top).
+  function treasureSprite(c){
+    var sp=PAL.spec, fa=PAL.filmA;
+    return bodySprite('treasure|'+c+'|'+sp+'|'+fa,[[0,'rgba(255,255,255,'+(0.3*sp)+')'],[0.7,rgba(c,0.12*fa)],[1,rgba(c,0.42)]]);
+  }
+  // Draws a glowSprite centred at (x,y) with the given radius and opacity —
+  // the one call every glow effect in the game (bubbles, motes, the whale's
+  // halo, ink clouds) goes through.
+  function stampGlow(c,mid,midA,x,y,rad,alpha){
+    if(alpha<=0.003||rad<=0) return;
+    var ga=ctx.globalAlpha;
+    ctx.globalAlpha=ga*Math.min(1,alpha);
+    ctx.drawImage(glowSprite(c,mid,midA),x-rad,y-rad,rad*2,rad*2);
+    ctx.globalAlpha=ga;
+  }
+  // Draws the slanted light shafts falling from the surface, at layer opacity `a`.
+  function drawShafts(a){
+    if(a<=0.01) return;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    // every shaft spans the same height, so one cached gradient serves them
+    // all; the layer's fade rides on globalAlpha
+    if(shaftKey!==themeName+'|'+H){
+      shaftKey=themeName+'|'+H;
+      shaftGrad=ctx.createLinearGradient(0,0,0,H*0.9);
+      shaftGrad.addColorStop(0,rgba(PAL.shaft[0],0.1*PAL.shaftA));
+      shaftGrad.addColorStop(0.42,rgba(PAL.shaft[1],0.032*PAL.shaftA));
+      shaftGrad.addColorStop(1,rgba(PAL.shaft[2],0));
+    }
+    ctx.fillStyle=shaftGrad; ctx.globalAlpha=Math.min(1,a);
+    for(var i=0;i<shafts.length;i++){
+      var s=shafts[i];
+      var x=(s.x+Math.sin(T*s.sp+s.ph)*0.05)*W;
+      var w=s.w*W*(0.62+Math.sin(T*s.sp*1.7+s.ph)*0.16);
+      ctx.beginPath();
+      ctx.moveTo(x-w*0.2,0); ctx.lineTo(x+w*0.2,0);
+      ctx.lineTo(x+w*0.95,H*0.9); ctx.lineTo(x-w*0.6,H*0.9);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // Advances and draws the drifting "marine snow" specks that fall through the water.
+  function drawSnow(a,dt){
+    if(a<=0.01) return;
+    ctx.save(); ctx.fillStyle=rgba(PAL.snow,1);
+    for(var i=0;i<snow.length;i++){
+      var p=snow[i];
+      p.y+=p.v*dt; p.ph+=dt*0.5; p.x+=Math.sin(p.ph)*6*dt;
+      if(p.y>H+4){ p.y=-4; p.x=Math.random()*W; }
+      ctx.globalAlpha=Math.min(1,0.16*a*PAL.snowA*(p.r/2.4));
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // Sways and draws the kelp fronds along the bottom of the field.
+  function drawKelp(a,dt){
+    if(a<=0.01) return;
+    ctx.save(); ctx.lineCap='round';
+    for(var i=0;i<kelp.length;i++){
+      var k=kelp[i];
+      k.ph+=dt*k.sp;
+      var sway=Math.sin(k.ph)*26, sway2=Math.sin(k.ph*0.7+1)*14;
+      ctx.beginPath();
+      ctx.moveTo(k.x,H+6);
+      ctx.bezierCurveTo(k.x+sway2,H-k.h*0.4, k.x+sway,H-k.h*0.75, k.x+sway*1.3,H-k.h);
+      ctx.strokeStyle=rgba(PAL.kelp,0.7*a); ctx.lineWidth=k.w; ctx.stroke();
+      ctx.strokeStyle=rgba(PAL.kelpLit,0.22*a); ctx.lineWidth=Math.max(1,k.w*0.32); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // Spawns (occasionally), moves, and draws a school of small background
+  // fish drifting across the field, one school at a time.
+  function drawFish(a,dt){
+    if(a<=0.01) return;
+    fishTimer-=dt;
+    if(!fish&&fishTimer<=0){
+      var dir=Math.random()<0.5?1:-1;
+      var n=reduce?6:9+((Math.random()*7)|0);
+      fish={dir:dir,x:dir>0?-90:W+90,y:H*(0.2+Math.random()*0.55),sp:38+Math.random()*40,n:n,off:[],ph:Math.random()*6.28};
+      for(var i=0;i<n;i++) fish.off.push({dx:(Math.random()-0.5)*150,dy:(Math.random()-0.5)*70,ph:Math.random()*6.28,s:0.75+Math.random()*0.6});
+      fishTimer=14+Math.random()*16;
+    }
+    if(!fish) return;
+    fish.x+=fish.dir*fish.sp*dt; fish.ph+=dt*3;
+    if((fish.dir>0&&fish.x>W+140)||(fish.dir<0&&fish.x<-140)){ fish=null; return; }
+    ctx.save(); ctx.fillStyle=rgba(PAL.fish,0.6*a*PAL.fishA);
+    for(var j=0;j<fish.n;j++){
+      var o=fish.off[j];
+      var x=fish.x+o.dx, y=fish.y+o.dy+Math.sin(fish.ph+o.ph)*5, s=o.s*7;
+      ctx.save(); ctx.translate(x,y); ctx.scale(fish.dir,1);
+      ctx.beginPath();
+      ctx.moveTo(s*1.6,0);
+      ctx.quadraticCurveTo(0,-s*0.62,-s*1.1,0);
+      ctx.quadraticCurveTo(0,s*0.62,s*1.6,0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-s*1.0,0); ctx.lineTo(-s*1.9,-s*0.55); ctx.lineTo(-s*1.9,s*0.55);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  // Drifts and pulses the tiny bioluminescent motes floating in the water.
+  function drawMotes(a,dt){
+    if(a<=0.01) return;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(var i=0;i<motes.length;i++){
+      var m=motes[i];
+      m.ph+=dt*m.sp; m.y+=m.vy*dt; m.x+=m.vx*dt+Math.sin(m.ph)*8*dt;
+      if(m.y<-10){ m.y=H+10; m.x=Math.random()*W; }
+      if(m.x<-10) m.x=W+10;
+      if(m.x>W+10) m.x=-10;
+      var pulse=0.55+0.45*Math.sin(m.ph*1.6);
+      var r=m.r*(1+pulse*0.5), gl=r*5;
+      stampGlow(PAL.mote[0],0.35,0.32,m.x,m.y,gl,0.5*a*pulse*PAL.moteA);
+    }
+    ctx.restore();
+  }
+  // Occasionally sends a huge, dim silhouette gliding across the far
+  // background — a hint of something much bigger than the whale visitor.
+  function drawLeviathan(a,dt){
+    if(a<=0.01) return;
+    leviTimer-=dt;
+    if(!levi&&leviTimer<=0){
+      var dir=Math.random()<0.5?1:-1;
+      levi={dir:dir,x:dir>0?-W*0.6:W*1.6,y:H*(0.28+Math.random()*0.4),w:W*0.34,sp:W*0.035,ph:0};
+      leviTimer=40+Math.random()*30;
+    }
+    if(!levi) return;
+    levi.x+=levi.dir*levi.sp*dt; levi.ph+=dt*0.7;
+    if((levi.dir>0&&levi.x>W*1.7)||(levi.dir<0&&levi.x<-W*0.7)){ levi=null; return; }
+    var w=levi.w, h=w*0.42, flap=Math.sin(levi.ph)*h*0.3;
+    ctx.save();
+    ctx.translate(levi.x,levi.y+Math.sin(levi.ph*0.5)*10); ctx.scale(levi.dir,1);
+    ctx.fillStyle=rgba(PAL.levi,0.5*a*PAL.leviA);
+    ctx.beginPath();
+    ctx.moveTo(-w,0+flap);
+    ctx.quadraticCurveTo(-w*0.4,-h-flap*0.5, 0,-h*0.42);
+    ctx.quadraticCurveTo(w*0.4,-h+flap*0.5, w,0-flap);
+    ctx.quadraticCurveTo(w*0.42,h*0.42, 0,h*0.6);
+    ctx.quadraticCurveTo(-w*0.42,h*0.42, -w,0+flap);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  /* Trench: something drifts between you and the water. */
+  function drawMurk(dt){
+    if(zoneIdx<5) return;
+    ctx.save();
+    for(var i=0;i<murk.length;i++){
+      var m=murk[i];
+      m.x+=m.vx*dt; m.ph+=dt*0.3;
+      if(m.x<-m.w) m.x=W+m.w;
+      if(m.x>W+m.w) m.x=-m.w;
+      var y=m.y+Math.sin(m.ph)*22;
+      ctx.save(); ctx.translate(m.x,y); ctx.scale(1,m.h/(m.w*0.5));
+      stampGlow(PAL.murk,0.55,0.68,0,0,m.w*0.5,0.5*PAL.murkA);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Draws one frame of the whole background: the water, then each depth
+  // layer (leviathan, light shafts, kelp, fish, the whale, snow, motes),
+  // cross-fading each layer's opacity in/out smoothly as the zone changes.
+  function drawScene(dt){
+    water();
+    var want=[1, zoneIdx>=1?1:0, zoneIdx>=2?1:0, zoneIdx>=3?1:0, zoneIdx>=4?1:0, zoneIdx>=5?1:0];
+    for(var i=0;i<6;i++){
+      layerA[i]+=(want[i]-layerA[i])*Math.min(1,dt*0.6);
+      if(Math.abs(want[i]-layerA[i])<0.005) layerA[i]=want[i];
+    }
+    drawLeviathan(layerA[5],dt);
+    drawShafts(layerA[0]*(zoneIdx>=4?0.45:1));
+    drawKelp(layerA[2],dt);
+    drawFish(layerA[3],dt);
+    drawAlien(dt);
+    drawSnow(layerA[1],dt);
+    drawMotes(layerA[4],dt);
+  }
+
+  /* ════════ BUBBLES ════════ */
+  /* A bubble remembers which film it wears, not what colour that is, so the
+     ones already in the water change with the light like everything else. */
+  var FILM_COUNT=5;
+  // The palette colour for a bubble's kind (or its assigned "film" index for a plain one).
+  function bubColor(b){
+    if(b.kind==='pearl') return PAL.gold;
+    if(b.kind==='ink')   return PAL.inkC;
+    if(b.kind==='air')   return PAL.airC;
+    if(b.kind==='star')  return PAL.star;
+    if(b.kind==='horse') return PAL.horse;
+    if(b.kind==='chest') return PAL.chest;
+    return PAL.films[b.ci%PAL.films.length];
+  }
+
+  /* Air pockets: the deep gives a breath back, but only when you're short of
+     one, and more readily the shorter you are. They rise fast — you have to
+     go and get it. */
+  function airWant(){
+    var m=MODES[mode];
+    if(m.clock) return timeLeft<m.clock*0.7 ? 0.55 : 0;
+    if(!m.air) return 0;
+    var cap=airCap();
+    return Math.max(0,(cap-air)/cap);
+  }
+  // True if any treasure bubble is currently on screen (keeps them one-at-a-time).
+  function treasureOnScreen(){
+    for(var i=0;i<bubbles.length;i++) if(isTreasure(bubbles[i].kind)) return true;
+    return false;
+  }
+  // True if an air-pocket bubble is currently on screen.
+  function airOnScreen(){
+    for(var i=0;i<bubbles.length;i++) if(bubbles[i].kind==='air') return true;
+    return false;
+  }
+
+  // Builds a bubble object with its rise speed, drift, and film/rotation
+  // randomized — speed scales with elapsed time, difficulty, and kind.
+  function makeBubble(o){
+    var r=o.r, kind=o.kind||'plain';
+    var d=DIFF[diff];
+    var base=(STATE==='playing'?26:16)*(1+(STATE==='playing'?elapsed*MODES[mode].pace:0)/52)*(34/r)*d.spd;
+    if(kind==='pearl') base*=1.5;
+    if(kind==='ink') base*=1.25*(1+Math.min(1.5,score/50000));   // faster as your score climbs, to 2.5x
+    if(kind==='air') base*=1.7;
+    if(isTreasure(kind)) base*=1.35;                 // they don't wait for you
+    var drift=zoneIdx>=2 ? 1.9 : 1;      // Kelp Line: the current takes hold
+    return {
+      x:o.x, y:o.y, r:r,
+      vy:-base*(0.78+rnd()*0.44)*(o.spdMul||1),
+      ph:rnd()*6.28, amp:(6+rnd()*16)*drift, sway:(0.6+rnd()*0.9)*(drift>1?1.25:1),
+      ci:(rnd()*FILM_COUNT)|0,
+      rot:rnd()*6.28, kind:kind, ambient:!!o.ambient, warned:false
+    };
+  }
+  // Rolls what kind of bubble to spawn next: air pockets and treasures get
+  // first refusal (each with their own gating), otherwise a weighted roll
+  // among plain/pearl/cluster/ink (ink only if the mode allows it).
+  function pickKind(){
+    var want=airWant();
+    if(want>0 && airCool<=0 && !airOnScreen() && rnd()<0.12+0.3*want) return 'air';
+    // treasures: rare, one at a time, and never before the second wave
+    if(wave>=2 && itemCool<=0 && !treasureOnScreen() && rnd()<0.09){
+      itemCool=16+rnd()*14;
+      var q=rnd();
+      return q<0.42?'star':q<0.8?'horse':'chest';
+    }
+    if(wave<2) return 'plain';
+    var r=rnd();
+    if(r<0.08) return 'pearl';
+    if(r<0.18) return 'cluster';
+    if(r<0.24) return MODES[mode].ink?'ink':'plain';
+    return 'plain';
+  }
+  // Creates and adds one new bubble at the bottom of the field. `ambient`
+  // spawns are the decorative, unpoppable-for-score bubbles shown on the
+  // idle/results screens; real spawns pick a size and kind for gameplay.
+  function spawn(ambient){
+    var t=ambient?0:elapsed*MODES[mode].pace;
+    var rMax=Math.max(25,46-t*0.16), rMin=Math.max(16,26-t*0.11);
+    var kind=ambient?'plain':pickKind();
+    var r=rMin+rnd()*(rMax-rMin);
+    if(kind==='pearl') r=Math.max(11,rMin*0.65);
+    if(kind==='cluster') r=Math.min(48,rMax*1.05);
+    if(kind==='air'){ r=Math.max(15,rMin*0.85); airCool=13+rnd()*9; }
+    if(isTreasure(kind)) r=Math.max(26,rMax*0.8);
+    bubbles.push(makeBubble({x:r+8+rnd()*Math.max(1,W-2*r-16), y:H+r+rnd()*40, r:r, kind:kind, ambient:ambient}));
+  }
+  // Spawns the particle burst and shockwave ring for a popped bubble.
+  function burst(b,n){
+    var count=reduce?5:(n||12), bc=bubColor(b);
+    for(var i=0;i<count;i++){
+      var a=(i/count)*6.283+Math.random()*.4, sp=40+Math.random()*90;
+      bits.push({x:b.x,y:b.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-20,r:1.4+Math.random()*2.6,life:0,max:.42+Math.random()*.3,c:bc});
+    }
+    rings.push({x:b.x,y:b.y,r:b.r*0.7,life:0,max:0.34,c:bc});
+  }
+
+  // how high it has climbed, 0 at the floor and 1 at the surface
+  function riseOf(b){ return 1-Math.max(0,Math.min(1,b.y/H)); }
+  // Score multiplier for how high the bubble had risen when popped (1..2).
+  function heightMul(b){ return 1+Math.max(0,(riseOf(b)-0.5)/0.5); }          // 1 … 2
+  // Score multiplier for popping close to the last pop's location (1..1.5),
+  // rewarding a tight, connected chain over scattered pops.
+  function linkMul(b){
+    if(!lastPop) return 1;
+    var d=Math.hypot(b.x-lastPop.x,b.y-lastPop.y), thr=Math.min(W,H)*0.38;
+    return d<thr ? 1+0.5*(1-d/thr) : 1;                                       // 1 … 1.5
+  }
+
+  /* ════════ TREASURES ════════
+     Rare finds from the second wave on. Each is drawn inside its own
+     glowing bubble; the same painter draws the start-screen legend. */
+  // Linearly interpolates between two [r,g,b] colours by t (0..1).
+  function mixC(a,b,t){ return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)]; }
+  // Draws the treasure icon (starfish, seahorse, or treasure chest) itself,
+  // centred at (x,y) with the given radius/rotation — used both inside a
+  // treasure bubble and for the field-guide legend icons.
+  function paintItem(g,kind,x,y,R,rot){
+    g.save(); g.translate(x,y); g.lineJoin='round'; g.lineCap='round';
+    if(kind==='star'){
+      var c=PAL.star, edge=shade(mixC(c,[60,20,10],0.45));
+      g.rotate(rot);
+      g.beginPath();
+      for(var i=0;i<5;i++){
+        var a=-Math.PI/2+i*1.2566, an=a+1.2566, am=a+0.6283;
+        if(i===0) g.moveTo(Math.cos(a)*R,Math.sin(a)*R);
+        g.quadraticCurveTo(Math.cos(am)*R*0.3,Math.sin(am)*R*0.3, Math.cos(an)*R,Math.sin(an)*R);
+      }
+      g.closePath();
+      var sg=g.createRadialGradient(0,0,0,0,0,R);
+      sg.addColorStop(0,rgba(mixC(c,[255,236,210],0.55),1)); sg.addColorStop(1,rgba(c,1));
+      g.fillStyle=sg; g.fill();
+      g.strokeStyle=rgba(edge,0.8); g.lineWidth=Math.max(0.8,R*0.07); g.stroke();
+      g.fillStyle=rgba(mixC(c,[255,245,230],0.7),0.9);
+      for(var k=0;k<5;k++){
+        var ak=-Math.PI/2+k*1.2566;
+        for(var d=0;d<2;d++){ g.beginPath(); g.arc(Math.cos(ak)*R*(0.34+d*0.24),Math.sin(ak)*R*(0.34+d*0.24),R*0.055,0,6.283); g.fill(); }
+      }
+    } else if(kind==='horse'){
+      var h=PAL.horse, he=shade(mixC(h,[4,40,40],0.5));
+      g.rotate(Math.sin(rot*2)*0.12);
+      g.scale(R/10.5,R/10.5); g.translate(-1,-0.8);
+      // curled tail
+      g.beginPath(); g.moveTo(0.5,7.6);
+      g.quadraticCurveTo(0.6,11,-2.6,10.6); g.quadraticCurveTo(-5.2,10,-4.1,7.9); g.quadraticCurveTo(-3,6.6,-2,7.8);
+      g.strokeStyle=rgba(h,1); g.lineWidth=1.9; g.stroke();
+      // body and head
+      g.beginPath();
+      g.moveTo(1,-7);
+      g.quadraticCurveTo(4,-8,6,-6.5); g.lineTo(9.2,-6.1); g.lineTo(9.2,-4.5); g.lineTo(5.5,-4.4);
+      g.quadraticCurveTo(3.5,-3.5,3.8,-1.5); g.quadraticCurveTo(5.2,2,2.5,5); g.quadraticCurveTo(1,6.4,1.5,8);
+      g.lineTo(-0.5,8); g.quadraticCurveTo(-1,5,-1.5,2); g.quadraticCurveTo(-3.2,-1,-1.5,-4); g.quadraticCurveTo(-1,-6.5,1,-7);
+      g.closePath();
+      var hg=g.createLinearGradient(-3,-7,5,8);
+      hg.addColorStop(0,rgba(mixC(h,[255,255,255],0.35),1)); hg.addColorStop(1,rgba(h,1));
+      g.fillStyle=hg; g.fill();
+      g.strokeStyle=rgba(he,0.85); g.lineWidth=0.6; g.stroke();
+      // dorsal fin, crown, belly ridges, eye
+      g.beginPath(); g.moveTo(-1.6,-1.2); g.quadraticCurveTo(-5.4,0.2,-1.9,3.2); g.closePath();
+      g.fillStyle=rgba(mixC(h,[255,255,255],0.5),0.8); g.fill();
+      g.beginPath(); g.moveTo(-0.2,-6.9); g.lineTo(-0.6,-9); g.lineTo(1.1,-7.3); g.lineTo(1.6,-9.2); g.lineTo(2.4,-7.3);
+      g.strokeStyle=rgba(h,1); g.lineWidth=0.8; g.stroke();
+      g.strokeStyle=rgba(he,0.45); g.lineWidth=0.5;
+      for(var r2=0;r2<4;r2++){ g.beginPath(); g.moveTo(1.2+r2*0.2,-1+r2*1.6); g.lineTo(3.9-r2*0.25,-0.6+r2*1.5); g.stroke(); }
+      g.beginPath(); g.arc(3.3,-5.6,0.95,0,6.283); g.fillStyle='rgba(5,28,38,.92)'; g.fill();
+      g.beginPath(); g.arc(3.6,-5.95,0.35,0,6.283); g.fillStyle='rgba(255,255,255,.9)'; g.fill();
+    } else {
+      var wood=[138,84,44], lid=[164,104,56], gold=PAL.dim?[214,160,40]:[255,206,90], ink2='rgba(40,20,8,.75)';
+      g.scale(R/9,R/9);
+      // light spilling from the seam
+      var lg=g.createRadialGradient(0,-0.5,0,0,-0.5,9);
+      lg.addColorStop(0,rgba([255,230,140],0.55)); lg.addColorStop(1,rgba([255,230,140],0));
+      g.fillStyle=lg; g.beginPath(); g.arc(0,-0.5,9,0,6.283); g.fill();
+      // base
+      g.beginPath(); g.moveTo(-8,0); g.lineTo(8,0); g.lineTo(8,6.6); g.lineTo(-8,6.6); g.closePath();
+      g.fillStyle=rgba(wood,1); g.fill(); g.strokeStyle=ink2; g.lineWidth=0.6; g.stroke();
+      // lid
+      g.beginPath(); g.moveTo(-8,0); g.lineTo(-8,-2.6); g.quadraticCurveTo(-8,-6.6,0,-6.6); g.quadraticCurveTo(8,-6.6,8,-2.6); g.lineTo(8,0); g.closePath();
+      g.fillStyle=rgba(lid,1); g.fill(); g.stroke();
+      // planks
+      g.strokeStyle='rgba(60,32,14,.45)'; g.lineWidth=0.4;
+      g.beginPath(); g.moveTo(-8,3.3); g.lineTo(8,3.3); g.moveTo(-7.4,-3.6); g.lineTo(7.4,-3.6); g.stroke();
+      // gold bands, seam and lock
+      g.fillStyle=rgba(gold,1);
+      g.fillRect(-5.8,-6.1,1.5,12.7); g.fillRect(4.3,-6.1,1.5,12.7);
+      g.fillRect(-8,-0.5,16,1);
+      g.fillRect(-1.5,-1.9,3,3.6);
+      g.beginPath(); g.arc(0,0,0.5,0,6.283); g.fillStyle=ink2; g.fill();
+      // coins peeking over the lid
+      g.fillStyle=rgba(gold,1); g.strokeStyle='rgba(120,80,10,.7)'; g.lineWidth=0.35;
+      for(var cI=0;cI<3;cI++){ g.beginPath(); g.ellipse(-2.4+cI*2.4,-6.7+(cI===1?-0.6:0),1.25,0.6,0,0,6.283); g.fill(); g.stroke(); }
+    }
+    g.restore();
+  }
+  // a four-point glint
+  // Draws one small four-point sparkle at (x,y) — used around treasure bubbles.
+  function glint(g,x,y,sz,col){
+    g.beginPath();
+    g.moveTo(x,y-sz); g.quadraticCurveTo(x,y,x+sz,y); g.quadraticCurveTo(x,y,x,y+sz);
+    g.quadraticCurveTo(x,y,x-sz,y); g.quadraticCurveTo(x,y,x,y-sz);
+    g.fillStyle=col; g.fill();
+  }
+  // (Re)paints the three treasure icons in the field guide's legend —
+  // called on load and whenever the theme changes (colours are theme-dependent).
+  function paintLegendIcons(){
+    var cs=document.querySelectorAll('.legend .icon');
+    for(var i=0;i<cs.length;i++){
+      var g=cs[i].getContext('2d');
+      g.setTransform(2,0,0,2,0,0); g.clearRect(0,0,22,22);
+      paintItem(g,cs[i].getAttribute('data-kind'),11,11.5,9,0.2);
+    }
+  }
+  // The fanfare for popping a treasure bubble — a different little run of
+  // notes per kind (star/horse/chest), the chest's ending in scattered coin clinks.
+  function treasureSnd(b,kind,pace){
+    pace=pace==null?1:pace;
+    var p=panOf(b), root=chordRootIdx();
+    if(kind==='star'){
+      for(var i=0;i<5;i++) note(scaleFreq(root+4+i*2),{when:i*0.05,dur:0.9+i*0.12,glass:1,vol:(0.13-i*0.012)*pace,simple:i>0,slide:false,pan:p});
+      noise(0.05*pace,0.34,7000,p);
+    } else if(kind==='horse'){
+      note(scaleFreq(root),{dur:0.5,glass:0.6,vol:0.15*pace,pan:p});
+      note(scaleFreq(root+2),{when:0.08,dur:0.5,glass:0.7,vol:0.14*pace,pan:p});
+      note(scaleFreq(root+5),{when:0.16,dur:1.1,glass:0.9,vol:0.14*pace,pan:p});
+      noise(0.04*pace,0.1,3000,p);
+    } else {
+      note(freqOf(midiFor(root)-24),{dur:2.4,glass:0.1,vol:0.16*pace,simple:true,slide:false});
+      for(var j=0;j<4;j++) note(scaleFreq(root+j*2),{when:0.04*j,dur:2,glass:0.9,vol:0.1*pace,simple:true,slide:false,pan:(j-1.5)*0.3});
+      note(scaleFreq(root+11),{when:0.25,dur:2.2,glass:1,vol:0.1*pace,simple:true,slide:false});
+      // coins
+      for(var k=0;k<6;k++) (function(d){ setTimeout(function(){ noise(0.035*pace,0.05,5200+Math.random()*2400,p+(Math.random()-0.5)*0.6); },d); })(60+k*55+Math.random()*30);
+    }
+    if(streak>=2){ chainLift(); harmony(b,pace); }
+  }
+
+  // Draws one bubble according to its kind — ink, air pocket, treasure, or
+  // a plain/pearl/cluster glass sphere with height-based warm glow and an
+  // "about to escape" pulsing ring when it's close to the surface.
+  function drawBubble(b){
+    var x=b.x,y=b.y,r=b.r,c=bubColor(b);
+    var cs='rgba('+c[0]+','+c[1]+','+c[2]+',';
+    var sp=PAL.spec;
+    var rise=riseOf(b);
+
+    if(b.kind==='ink'){
+      // a faint halo, so ink reads against the darkest water from the floor up
+      ctx.save(); ctx.globalCompositeOperation=PAL.linkOp;
+      stampGlow(PAL.inkC,0.5,0.35,x,y,r*1.6,PAL.dim?0.12:0.22);
+      ctx.restore();
+      ctx.drawImage(inkSprite(),x-r,y-r,r*2,r*2);
+      ctx.beginPath(); ctx.arc(x,y,r-0.8,0,6.283);
+      ctx.strokeStyle=cs+'0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+      for(var s=0;s<3;s++){
+        var a0=b.rot+s*2.1;
+        ctx.beginPath(); ctx.arc(x,y,r*0.55,a0,a0+1.1);
+        ctx.strokeStyle=cs+'0.35)'; ctx.lineWidth=1.4; ctx.stroke();
+      }
+      return;
+    }
+
+    if(b.kind==='air'){
+      var beat=0.5+0.5*Math.sin(T*4+b.rot);
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      var ag=ctx.createRadialGradient(x,y,r*0.3,x,y,r*(2.4+beat*0.5));
+      ag.addColorStop(0,rgba(PAL.airGlow[0],0.34+beat*0.16));
+      ag.addColorStop(0.4,rgba(PAL.airGlow[1],.12));
+      ag.addColorStop(1,rgba(PAL.airGlow[2],0));
+      ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(x,y,r*(2.4+beat*0.5),0,6.283); ctx.fill();
+      ctx.restore();
+      var ig=ctx.createRadialGradient(x-r*0.3,y-r*0.35,r*0.05,x,y,r);
+      ig.addColorStop(0,'rgba(255,255,255,'+(0.5+(1-sp)*0.3)+')');
+      ig.addColorStop(0.6,'rgba(235,248,255,.3)');
+      ig.addColorStop(1,rgba(PAL.airGlow[1],.55));
+      ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fillStyle=ig; ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,r-0.8,0,6.283);
+      ctx.strokeStyle=rgba(PAL.airRing,0.8+beat*0.2); ctx.lineWidth=2; ctx.stroke();
+      // a pocket of smaller bubbles held inside
+      for(var ab=0;ab<5;ab++){
+        var aa=b.rot*1.4+ab*1.257, ar=r*(0.2+((ab*3)%4)*0.11);
+        var ax2=x+Math.cos(aa)*r*0.44, ay2=y+Math.sin(aa)*r*0.4;
+        ctx.beginPath(); ctx.arc(ax2,ay2,ar*0.7,0,6.283);
+        ctx.strokeStyle=PAL.dim?rgba(PAL.airRing,.45):'rgba(255,255,255,.62)'; ctx.lineWidth=1.1; ctx.stroke();
+      }
+      ctx.save();
+      ctx.translate(x-r*0.34,y-r*0.38); ctx.rotate(-0.6);
+      ctx.beginPath(); ctx.ellipse(0,0,r*0.26,r*0.14,0,0,6.283);
+      ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    if(isTreasure(b.kind)){
+      var tp=0.5+0.5*Math.sin(T*3+b.rot);
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      stampGlow(c,0.45,0.4,x,y,r*(2+tp*0.3),0.28+tp*0.12);
+      ctx.restore();
+      ctx.drawImage(treasureSprite(c),x-r,y-r,r*2,r*2);
+      ctx.beginPath(); ctx.arc(x,y,r-1,0,6.283);
+      ctx.strokeStyle=rgba(c,0.95); ctx.lineWidth=2.2; ctx.stroke();
+      paintItem(ctx,b.kind,x,y,r*0.62,b.rot*0.6);
+      // glints circling the bubble
+      for(var gI=0;gI<3;gI++){
+        var ga=T*1.6+b.rot+gI*2.094;
+        glint(ctx,x+Math.cos(ga)*r*1.2,y+Math.sin(ga)*r*1.2,3+tp*2.2,rgba(PAL.dim?shade(c):[255,252,236],0.85));
+      }
+      ctx.save();
+      ctx.translate(x-r*0.36,y-r*0.4); ctx.rotate(-0.6);
+      ctx.beginPath(); ctx.ellipse(0,0,r*0.22,r*0.1,0,0,6.283);
+      ctx.fillStyle='rgba(255,255,255,'+(0.7*sp)+')'; ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    // Bioluminescence: the light fails, so bubbles carry their own
+    if(zoneIdx>=4){
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      stampGlow(c,0.5,0.5,x,y,r*2.1,0.17);
+      ctx.restore();
+    }
+    // worth more the higher it climbs — and it shows
+    if(rise>0.5){
+      var hot=(rise-0.5)/0.5;
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      stampGlow(PAL.warm,0.6,0.55,x,y,r*1.9,0.2*hot*PAL.warmA);
+      ctx.restore();
+    }
+
+    var pearl=b.kind==='pearl';
+    ctx.drawImage(filmSprite(c,pearl),x-r,y-r,r*2,r*2);
+    ctx.beginPath(); ctx.arc(x,y,r-0.8,0,6.283);
+    ctx.strokeStyle=cs+(pearl?'0.95)':'0.75)'); ctx.lineWidth=pearl?2:1.3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,r-2.6,b.rot,b.rot+2.1);
+    ctx.strokeStyle='rgba(255,255,255,'+(0.34*sp)+')'; ctx.lineWidth=2.2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,r-2.6,b.rot+3.0,b.rot+4.3);
+    ctx.strokeStyle=cs+'0.4)'; ctx.lineWidth=1.6; ctx.stroke();
+    if(b.kind==='cluster'){
+      var off=r*0.34;
+      ctx.beginPath(); ctx.arc(x-off,y+off*0.5,r*0.34,0,6.283);
+      ctx.strokeStyle='rgba(255,255,255,'+(0.4*sp)+')'; ctx.lineWidth=1.1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x+off*0.9,y-off*0.2,r*0.28,0,6.283);
+      ctx.strokeStyle=cs+'0.6)'; ctx.lineWidth=1.1; ctx.stroke();
+    }
+    // about to escape
+    if(b.warned && STATE==='playing'){
+      var tick=0.5+0.5*Math.sin(T*11);
+      ctx.beginPath(); ctx.arc(x,y,r+4+tick*3,0,6.283);
+      ctx.strokeStyle=rgba(PAL.warn,0.35+tick*0.4);
+      ctx.lineWidth=1.8; ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(x-r*0.34,y-r*0.38); ctx.rotate(-0.6);
+    ctx.beginPath(); ctx.ellipse(0,0,r*0.26,r*0.14,0,0,6.283);
+    ctx.fillStyle='rgba(255,255,255,'+(0.72*sp)+')'; ctx.fill();
+    ctx.restore();
+  }
+
+  /* ════════ CHAIN FX ════════
+     A chain should look like it sounds. Each link wears the colour of the
+     chord it was played on; the field's edges warm as the chain grows and
+     pulse on every pop; each fifth link throws a shockwave and a banner. */
+  var chainPulse=0, chainHeat=0, banner=null, shakeT=0, edgeGrad=null, edgeKey='';
+  // The colour the current chain link/glow wears, tied to the chord progression.
+  function chainColor(){ return PAL.films[chainStep()%PAL.films.length]; }
+  // Spawns the ring-echoes and spark particles for every pop past the
+  // second in a chain. The chord-change stab this used to fire is gone —
+  // the backing track plays the change itself now, and a second one on top
+  // was just two things marking the same moment.
+  function chainFx(b){
+    if(streak<2) return;
+    var c=chainColor();
+    chainPulse=1;
+    var echoes=reduce?1:1+Math.min(3,Math.floor(streak/4));
+    for(var i=0;i<echoes;i++){
+      rings.push({x:b.x,y:b.y,r:b.r*0.8,life:-i*0.07,max:0.5+i*0.08,c:c,
+                  span:b.r*(1.6+i*0.9+Math.min(streak,20)*0.05),w:2.4});
+    }
+    var n=reduce?2:Math.min(14,3+streak);
+    for(var k=0;k<n;k++){
+      var a=Math.random()*6.283, sp=20+Math.random()*50;
+      bits.push({x:b.x+Math.cos(a)*b.r*0.6,y:b.y+Math.sin(a)*b.r*0.6,vx:Math.cos(a)*sp,vy:-30-Math.random()*60,
+                 r:1.2+Math.random()*1.8,life:0,max:0.9+Math.random()*0.5,c:c,g:-40});
+    }
+  }
+  // The big shockwave-ring(s) and "×N" banner thrown every 5th link,
+  // scaling from a quiet ping at ×5 up to a full screen-shaking event by ×50.
+  function chainMilestone(b){
+    var c=chainColor();
+    // the first milestone (×5) barely stirs the water; by ×50 it's a shockwave
+    var epic=Math.min(1,Math.max(0,(streak-5)/45));
+    rings.push({x:b.x,y:b.y,r:b.r,life:0,max:0.85+epic*0.55,c:c,
+                span:Math.max(W,H)*(0.5+epic*0.4),w:2.6+epic*5});
+    if(epic>0.35){
+      // a second, wider echo joins once the chain is properly cooking
+      rings.push({x:b.x,y:b.y,r:b.r,life:-0.08,max:1.05+epic*0.55,c:c,
+                  span:Math.max(W,H)*(0.72+epic*0.45),w:1.6+epic*3.4});
+    }
+    if(!(banner&&banner.item)) banner={text:'×'+streak,life:0,max:1.15+epic*0.65,c:c,epic:epic};   // a treasure's banner wins
+    if(!reduce) shakeT=Math.min(0.42,0.04+epic*0.38);
+  }
+  // a broken chain doesn't just fade: its links shatter
+  function snapLinks(){
+    for(var i=0;i<links.length;i++){
+      var lk=links[i];
+      for(var s=0;s<3;s++){
+        var u=Math.random();
+        bits.push({x:lk.x1+(lk.x2-lk.x1)*u,y:lk.y1+(lk.y2-lk.y1)*u,vx:(Math.random()-0.5)*40,vy:Math.random()*20,
+                   r:1+Math.random()*1.5,life:0,max:0.6,c:lk.c||PAL.link});
+      }
+    }
+    links.length=0;
+  }
+  // a star tide lights the surface gold
+  function drawTideGlow(){
+    if(tideT<=0) return;
+    var a=(0.16+0.06*Math.sin(T*3.2))*Math.min(1,tideT/1.5);
+    var g=ctx.createLinearGradient(0,0,0,H*0.35);
+    g.addColorStop(0,rgba(PAL.star,a)); g.addColorStop(1,rgba(PAL.star,0));
+    ctx.save(); ctx.globalCompositeOperation=PAL.linkOp; ctx.fillStyle=g; ctx.fillRect(0,0,W,H*0.35); ctx.restore();
+  }
+  // Traces a rounded "pill" (stadium) shape into the given path — used for the tide gauge.
+  function pillPath(g,x,y,w,h){
+    var r=h/2;
+    g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y);
+    g.arc(x+w-r,y+r,r,-Math.PI/2,Math.PI/2); g.lineTo(x+r,y+h);
+    g.arc(x+r,y+r,r,Math.PI/2,Math.PI*1.5); g.closePath();
+  }
+  // Draws the "STAR TIDE ×N · Ns" pill gauge at the top of the field while a
+  // star tide is active, blinking as it's about to run out.
+  function drawTideGauge(){
+    if(tideT<=0) return;
+    var tw=Math.min(190,W*0.5), th=20, tx=W/2-tw/2, ty=12, c=PAL.star;
+    var blink=tideT<3?0.55+0.45*Math.sin(T*12):1;
+    ctx.save(); ctx.globalAlpha=blink;
+    pillPath(ctx,tx,ty,tw,th);
+    ctx.fillStyle=PAL.dim?'rgba(255,255,255,.78)':'rgba(4,18,26,.62)'; ctx.fill();
+    ctx.save(); ctx.clip();
+    ctx.fillStyle=rgba(c,0.38); ctx.fillRect(tx,ty,tw*Math.max(0,tideT/tideMax),th);
+    ctx.restore();
+    pillPath(ctx,tx,ty,tw,th);
+    ctx.strokeStyle=rgba(c,0.9); ctx.lineWidth=1; ctx.stroke();
+    ctx.font='600 10px "Public Sans", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=PAL.dim?'rgba(6,40,48,.95)':'rgba(255,238,224,.96)';
+    ctx.fillText('STAR TIDE  ×'+tideLevel+'  ·  '+Math.ceil(tideT)+'s',W/2,ty+th/2+0.5);
+    ctx.restore();
+  }
+  // Tints the whole field's edges with the current chain colour — a slow
+  // ambient warmth from chainHeat plus a quick pulse on every pop.
+  function drawChainGlow(){
+    var amt=chainHeat*0.22+chainPulse*0.14*Math.min(1,streak/6);
+    if(amt<0.01) return;
+    var c=chainColor(), key=c+'|'+W+'|'+H;
+    if(edgeKey!==key){
+      edgeKey=key;
+      edgeGrad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.28,W/2,H/2,Math.hypot(W,H)*0.55);
+      edgeGrad.addColorStop(0,rgba(c,0)); edgeGrad.addColorStop(1,rgba(c,1));
+    }
+    ctx.save(); ctx.globalCompositeOperation=PAL.linkOp; ctx.globalAlpha=Math.min(0.5,amt);
+    ctx.fillStyle=edgeGrad; ctx.fillRect(0,0,W,H); ctx.restore();
+  }
+
+  /* Popped ink bursts into a squid-ink cloud that hides whatever is behind
+     it: fast out, a slow drift up, then it thins away. */
+  var clouds=[];
+  // Starts a new ink cloud at a popped ink bubble's location (capped at 4 at once).
+  function inkCloud(b){
+    if(clouds.length>=4) clouds.shift();
+    var blobs=[];
+    for(var i=0;i<7;i++){
+      blobs.push({a:i/7*6.283+Math.random()*0.6, d:0.25+Math.random()*0.45, s:0.45+Math.random()*0.35, ph:Math.random()*6.28});
+    }
+    clouds.push({x:b.x,y:b.y,life:0,max:2.8,R:Math.max(70,Math.min(W,H)*0.24),blobs:blobs});
+  }
+  // Draws every active ink cloud: grows in fast, drifts up, then thins away.
+  function drawClouds(){
+    if(!clouds.length) return;
+    var col=PAL.dim?[22,18,38]:[6,6,14];
+    for(var i=0;i<clouds.length;i++){
+      var c=clouds[i], u=c.life/c.max;
+      var grow=1-Math.pow(1-Math.min(1,c.life/0.4),3);
+      var fade=u<0.65?1:Math.max(0,(1-u)/0.35);
+      var R=c.R*(0.35+0.65*grow)*(1+u*0.25), cy=c.y-u*14;
+      stampGlow(col,0.55,0.8,c.x,cy,R*0.75,0.9*fade);
+      for(var k=0;k<c.blobs.length;k++){
+        var q=c.blobs[k], wob=reduce?0:Math.sin(T*1.3+q.ph)*0.06;
+        stampGlow(col,0.55,0.8,c.x+Math.cos(q.a)*R*(q.d+wob),cy+Math.sin(q.a)*R*(q.d+wob),R*q.s,0.8*fade);
+      }
+    }
+  }
+  // the swipe leaves a brief wake in the water
+  function drawTrail(){
+    if(trail.length<2) return;
+    ctx.save(); ctx.lineCap='round'; ctx.globalCompositeOperation=PAL.linkOp;
+    var col=PAL.dim?PAL.link:[255,236,224];
+    for(var i=1;i<trail.length;i++){
+      var a=trail[i-1], b=trail[i], f=Math.max(0,1-(T-b.t)/0.22);
+      if(f<=0||b.gap) continue;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=rgba(col,0.5*f); ctx.lineWidth=1+5*f; ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // The main render pass for one frame: scene, chain glow, tide glow, the
+  // chain-link trail, every bubble, the swipe trail, particles/rings,
+  // ink clouds, murk, floating score text, the tide gauge, and the
+  // milestone banner — with an optional screen shake wrapped around it all.
+  function draw(dt){
+    var shake=shakeT>0 ? shakeT*18 : 0;
+    if(shake){ ctx.save(); ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake); }
+    drawScene(dt);
+    drawChainGlow();
+    drawTideGlow();
+    // the route you've drawn through the field, in the colour of each chord
+    ctx.save(); ctx.globalCompositeOperation=PAL.linkOp; ctx.lineCap='round';
+    for(var L=0;L<links.length;L++){
+      var lk=links[L], u=lk.life/lk.max, lc=lk.c||PAL.link, lw=lk.w||2.2, fade=1-u;
+      ctx.beginPath(); ctx.moveTo(lk.x1,lk.y1); ctx.lineTo(lk.x2,lk.y2);
+      ctx.strokeStyle=rgba(lc,0.16*fade*PAL.linkA); ctx.lineWidth=lw*3.2*fade+1; ctx.stroke();
+      ctx.strokeStyle=rgba(lc,0.55*fade*PAL.linkA); ctx.lineWidth=lw*fade+0.6; ctx.stroke();
+      // a spark runs the link once, from the last pop to this one
+      var run=Math.min(1,lk.life/0.28);
+      if(run<1) stampGlow(lc,0.3,0.4,lk.x1+(lk.x2-lk.x1)*run,lk.y1+(lk.y2-lk.y1)*run,lw*4+6,0.9*PAL.linkA);
+    }
+    ctx.restore();
+    for(var i=0;i<bubbles.length;i++) drawBubble(bubbles[i]);
+    drawTrail();
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    // particles share a handful of colours: set the colour only when it
+    // changes and let globalAlpha carry the fade
+    var lastC=null;
+    for(var j=0;j<rings.length;j++){
+      var rg=rings[j],k=rg.life/rg.max;
+      if(k<0) continue;                       // an echo still waiting its turn
+      if(rg.c!==lastC){ lastC=rg.c; ctx.strokeStyle=rgba(rg.c,1); }
+      ctx.globalAlpha=0.7*(1-k);
+      ctx.beginPath(); ctx.arc(rg.x,rg.y,rg.r+k*(rg.span||rg.r*1.5),0,6.283);
+      ctx.lineWidth=(rg.w||2)*(1-k)+0.4; ctx.stroke();
+    }
+    lastC=null;
+    for(var m=0;m<bits.length;m++){
+      var p=bits[m],t=p.life/p.max;
+      if(p.c!==lastC){ lastC=p.c; ctx.fillStyle=rgba(p.c,1); }
+      ctx.globalAlpha=0.85*(1-t);
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1-t*0.6),0,6.283); ctx.fill();
+    }
+    ctx.restore();
+    drawClouds();
+    drawMurk(dt);
+    // floating scores
+    ctx.textAlign='center';
+    var fontSize=0;
+    for(var q=0;q<pops.length;q++){
+      var fp=pops[q], u2=fp.life/fp.max;
+      if(fp.size!==fontSize){ fontSize=fp.size; ctx.font='700 '+fontSize+'px "Public Sans", sans-serif'; }
+      ctx.fillStyle='rgba('+fp.c[0]+','+fp.c[1]+','+fp.c[2]+','+(1-u2)+')';
+      ctx.fillText(fp.text, fp.x, fp.y-u2*34);
+    }
+    drawTideGauge();
+    if(banner){
+      // chain banners carry their own epic (0 at ×5, 1 by ×50); a treasure's
+      // banner has no chain length behind it, so it plays at a solid middle
+      var epic=banner.epic!=null?banner.epic:0.6;
+      var bu=banner.life/banner.max, fsBase=Math.min(64,Math.max(34,W*0.12));
+      var fs=Math.round(fsBase*(0.7+0.4*epic));
+      var sc=reduce?1:1+Math.max(0,(0.14+0.4*epic)-bu*1.6), ba=bu<0.7?1:Math.max(0,(1-bu)/0.3);
+      ctx.save(); ctx.translate(W/2,H*0.32); ctx.scale(sc,sc); ctx.textBaseline='middle';
+      ctx.font='800 '+fs+'px "Public Sans", sans-serif';
+      if(!PAL.dim){ ctx.shadowColor=rgba(banner.c,(0.45+0.45*epic)*ba); ctx.shadowBlur=8+28*epic; }
+      ctx.fillStyle=rgba(banner.c,0.92*ba);
+      ctx.fillText(banner.text,0,0);
+      ctx.shadowBlur=0;
+      ctx.font='600 11px "Public Sans", sans-serif';
+      ctx.fillStyle=rgba(PAL.dim?[6,41,58]:[251,239,232],0.7*ba);
+      ctx.fillText(banner.sub||'C H A I N',0,fs*0.72);
+      ctx.restore();
+    }
+    ctx.textAlign='start';
+    if(shake) ctx.restore();
+  }
+
+  /* ════════ HUD ════════ */
+  // The current score multiplier (chain length, minimum 1).
+  function multiplier(){ return Math.max(1,streak); }
+  // Formats seconds as "M:SS" for the clock stat.
+  function fmtTime(s){ s=Math.max(0,Math.ceil(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+  // Adds thousands separators to a number, e.g. 12345 -> "12,345".
+  function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  // keeps the score to five characters at most, so the row never grows
+  function fmtScore(n){
+    if(n>=1000000) return (n/1000000).toFixed(2)+'M';
+    if(n>=100000) return Math.round(n/1000)+'k';
+    return fmt(n);
+  }
+  // Repaints every HUD readout (score, chain, held/air pips, clock, depth,
+  // zone name) from the current game state — called after anything that
+  // could have changed one of them.
+  function syncHud(){
+    elScore.textContent=fmtScore(score);
+    var mv=multiplier();
+    if(elMult.textContent!=='×'+mv){
+      elMult.textContent='×'+mv;
+      if(mv>1&&!reduce){ elMult.classList.remove('bump'); void elMult.offsetWidth; elMult.classList.add('bump'); }
+    }
+    elMult.parentElement.classList.toggle('idle',mv===1);
+    elMult.parentElement.classList.toggle('hot',mv>=10);
+    for(var h=0;h<elHeld.children.length;h++) elHeld.children[h].classList.toggle('gone',h>=held);
+    var m=MODES[mode];
+    clockStat.hidden=!m.clock; airStat.hidden=!m.air;
+    if(m.clock){
+      // before a dive, show the full clock rather than a red 0:00
+      var idle=STATE==='idle';
+      elClock.textContent=fmtTime(idle?m.clock:timeLeft);
+      elClock.classList.toggle('low',!idle&&timeLeft<=10);
+    }
+    if(m.air){
+      var cap=airCap(), dots=elAir.children;
+      for(var i=0;i<dots.length;i++){
+        dots[i].hidden=i>=cap;
+        dots[i].classList.toggle('gone',i>=air);
+      }
+    }
+    depthM.textContent=fmt(depthMeters())+' m';
+    depthZ.textContent='Wave '+wave+' · '+zone().name;
+  }
+  // Briefly flashes the field red (or purple for ink) — a miss or ink hit.
+  function flash(inky){
+    flashEl.classList.toggle('inky',!!inky);
+    flashEl.classList.add('on');
+    setTimeout(function(){ flashEl.classList.remove('on'); },90);
+  }
+  var toastT=null;
+  // menu feedback only; nothing pops up over the water during a dive
+  function toast(msg,kind){
+    toastEl.textContent=msg;
+    toastEl.classList.toggle('good',kind==='good');
+    toastEl.classList.add('on');
+    clearTimeout(toastT);
+    toastT=setTimeout(function(){ toastEl.classList.remove('on'); },1100);
+  }
+  // Queues a piece of floating score text (e.g. "+42") to drift up from (x,y).
+  function floatScore(x,y,text,c,size){
+    pops.push({x:x,y:y,text:text,c:c,life:0,max:0.95,size:size||15});
+    if(pops.length>14) pops.shift();
+  }
+  // Recomputes which depth zone the current score falls in, and if it
+  // changed, retunes the drone/water gradient and plays the zone-change chime.
+  function checkZone(){
+    var i=0;
+    for(var k=0;k<ZONES.length;k++) if(score>=ZONES[k].at) i=k;
+    if(i!==zoneIdx){
+      zoneIdx=i; gradKey='';
+      note(freqOf(midiFor(0)-12),{dur:2.6,glass:0.2,vol:0.13,slide:false});
+      note(scaleFreq(4),{when:0.12,dur:2.2,glass:0.9,vol:0.09,slide:false});
+      note(scaleFreq(7),{when:0.24,dur:2.4,glass:1,vol:0.08,slide:false});
+      musicTune(); musicSet(musicOn||STATE==='playing');
+      syncHud();
+    }
+  }
+
+  /* ════════ LOOP ════════ */
+  var last=0;
+  // The single requestAnimationFrame callback driving the whole game:
+  // advances timers/spawns/physics while playing, ages every particle
+  // system, and repaints. Throttles to ~30fps behind a menu, where the
+  // water is blurred anyway, and goes idle entirely while paused.
+  function frame(ts){
+    requestAnimationFrame(frame);
+    if(STATE==='paused'){ last=0; return; }
+    // behind a menu the water is blurred anyway: 30 fps is plenty there
+    if((STATE==='idle'||STATE==='over')&&last&&ts-last<30) return;
+    if(!last) last=ts;
+    var dt=Math.max(0,Math.min(0.05,(ts-last)/1000)); last=ts;
+    T+=dt;
+    if(!W) resize();
+
+    var playing=STATE==='playing';
+    if(playing){
+      var d=DIFF[diff];
+      elapsed+=dt;
+      if(alienCooldown>0) alienCooldown-=dt;
+      if(airCool>0) airCool-=dt;
+      if(itemCool>0) itemCool-=dt;
+      if(tideT>0){ tideT-=dt; if(tideT<=0){ tideT=0; tideLevel=1; } }
+      if(MODES[mode].clock){
+        timeLeft-=dt;
+        var clockText=fmtTime(timeLeft);            // the DOM only hears about whole seconds
+        if(elClock.textContent!==clockText){ elClock.textContent=clockText; elClock.classList.toggle('low',timeLeft<=10); }
+        if(timeLeft<=0) gameOver('time');
+      }
+      var w=Math.floor(elapsed/d.wave)+1;
+      if(w!==wave){ wave=w; musicTune(); syncHud(); }
+      var interval=Math.max(d.min,1.45*Math.pow(d.decay,elapsed*MODES[mode].pace));
+      spawnTimer-=dt;
+      if(spawnTimer<=0){ spawn(false); spawnTimer=interval*(0.75+rnd()*0.5); }
+      for(var rq=respawn.length-1;rq>=0;rq--){
+        respawn[rq]-=dt;
+        if(respawn[rq]<=0){ respawn.splice(rq,1); if(bubbles.length<16) spawn(false); }
+      }
+    } else if(STATE==='idle'||STATE==='over'){
+      spawnTimer-=dt;
+      if(spawnTimer<=0&&bubbles.length<9){ spawn(true); spawnTimer=0.7+Math.random()*0.8; }
+    }
+
+    for(var i=bubbles.length-1;i>=0;i--){
+      var b=bubbles[i];
+      b.ph+=dt*b.sway; b.rot+=dt*0.5;
+      b.y+=b.vy*dt;
+      b.x+=Math.cos(b.ph)*b.amp*dt;
+      if(b.x<b.r+4) b.x=b.r+4;
+      if(b.x>W-b.r-4) b.x=W-b.r-4;
+      if(playing&&!b.ambient&&!b.warned&&b.kind!=='ink'&&b.kind!=='air'&&!isTreasure(b.kind)){
+        if(b.y/Math.max(1,Math.abs(b.vy)) < 1.05){ b.warned=true; warnSnd(panOf(b)); }
+      }
+      if(b.y+b.r<0){
+        bubbles.splice(i,1);
+        // a missed air pocket or treasure costs nothing — a gift, not a duty
+        if(playing&&!b.ambient&&b.kind!=='ink'&&b.kind!=='air'&&!isTreasure(b.kind)){
+          missed++;
+          var saved=breakChain(true,true);
+          // in One Breath a held breath covers the escape entirely
+          if(MODES[mode].air && !(saved && mode==='breath')){
+            air=Math.max(0,air-1); flash(); missSnd(); syncHud();
+            if(air<=0) gameOver('air');
+          }else{ missSnd(); syncHud(); }
+        }
+      }
+    }
+    for(var j=rings.length-1;j>=0;j--){ rings[j].life+=dt; if(rings[j].life>=rings[j].max) rings.splice(j,1); }
+    for(var L2=links.length-1;L2>=0;L2--){ links[L2].life+=dt; if(links[L2].life>=links[L2].max) links.splice(L2,1); }
+    for(var q2=pops.length-1;q2>=0;q2--){ pops[q2].life+=dt; if(pops[q2].life>=pops[q2].max) pops.splice(q2,1); }
+    for(var m=bits.length-1;m>=0;m--){
+      var p=bits[m]; p.life+=dt;
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=(p.g==null?160:p.g)*dt; p.vx*=0.97;
+      if(p.life>=p.max) bits.splice(m,1);
+    }
+    // a long swipe can throw hundreds of particles; keep the newest
+    if(bits.length>320) bits.splice(0,bits.length-320);
+    if(rings.length>80) rings.splice(0,rings.length-80);
+    chainPulse=Math.max(0,chainPulse-dt*2.4);
+    while(trail.length&&T-trail[0].t>0.25) trail.shift();
+    for(var ci=clouds.length-1;ci>=0;ci--){ clouds[ci].life+=dt; if(clouds[ci].life>=clouds[ci].max) clouds.splice(ci,1); }
+    shakeT=Math.max(0,shakeT-dt);
+    if(banner){ banner.life+=dt; if(banner.life>=banner.max) banner=null; }
+    chainHeat+=((playing?Math.min(1,streak/24):0)-chainHeat)*Math.min(1,dt*3);
+    draw(dt);
+  }
+  requestAnimationFrame(frame);
+
+  /* ════════ INPUT ════════
+     Tap a bubble or swipe through a run of them. A swipe is sampled every
+     few pixels between pointer events, so a fast flick can't skip one.
+     Tapping empty water still breaks the chain, but only a tap: that is
+     judged when the finger lifts, so a swipe may start in open water.
+     Ink ends a swipe outright; nothing more pops until you lift. */
+  var swipe=null, trail=[];
+  // measured once per swipe: pops rewrite the HUD, and measuring after each
+  // one would force a layout on every pointer move
+  // Converts a pointer event's page coordinates into field-local x/y.
+  function fieldPoint(ev,r){
+    r=r||cv.getBoundingClientRect();
+    return {x:ev.clientX-r.left, y:ev.clientY-r.top};
+  }
+  // Finds and pops the topmost bubble under (x,y), if any (pad is the hit
+  // radius fudge for a tap/swipe; inkPad is the separate, smaller one for ink).
+  function popAt(x,y,pad,inkPad){
+    for(var i=bubbles.length-1;i>=0;i--){
+      var b=bubbles[i];
+      // a tap never gets the generous radius on ink; a swipe sweeps ink as
+      // wide as everything else, so it cannot slip past it
+      var dx=x-b.x,dy=y-b.y,hit=b.r+(b.kind==='ink'?inkPad:pad);
+      if(dx*dx+dy*dy<=hit*hit){ bubbles.splice(i,1); hitBubble(b); return b; }
+    }
+    return null;
+  }
+  fieldEl.addEventListener('pointerdown',function(ev){
+    if(STATE!=='playing') return;
+    var rect=cv.getBoundingClientRect(), p=fieldPoint(ev,rect), touch=ev.pointerType!=='mouse';
+    swipe={id:ev.pointerId,rect:rect,x:p.x,y:p.y,sx:p.x,sy:p.y,popped:0,pad:touch?10:4};
+    try{ fieldEl.setPointerCapture(ev.pointerId); }catch(e){}
+    trail.push({x:p.x,y:p.y,t:T,gap:true});
+    var hit=popAt(p.x,p.y,touch?17:6,2);
+    if(hit){ swipe.popped++; if(hit.kind==='ink') swipe.dead=true; }
+  });
+  fieldEl.addEventListener('pointermove',function(ev){
+    if(!swipe||swipe.dead||ev.pointerId!==swipe.id||STATE!=='playing') return;
+    var p=fieldPoint(ev,swipe.rect), dx=p.x-swipe.x, dy=p.y-swipe.y;
+    var steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/8));
+    for(var i=1;i<=steps;i++){
+      var hit=popAt(swipe.x+dx*i/steps,swipe.y+dy*i/steps,swipe.pad,swipe.pad);
+      if(!hit) continue;
+      swipe.popped++;
+      if(hit.kind==='ink'){ swipe.dead=true; break; }   // ink ends the swipe: lift and go again
+    }
+    swipe.x=p.x; swipe.y=p.y;
+    trail.push({x:p.x,y:p.y,t:T});
+  });
+  // Ends the current swipe/tap on pointerup or pointercancel: a tap that
+  // didn't pop anything and didn't move far breaks the chain.
+  function endSwipe(ev,cancelled){
+    if(!swipe||ev.pointerId!==swipe.id) return;
+    var moved=Math.hypot(swipe.x-swipe.sx,swipe.y-swipe.sy);
+    if(!cancelled&&STATE==='playing'&&!swipe.popped&&moved<12){ breakChain(false,false); blip(); syncHud(); }
+    swipe=null;
+  }
+  fieldEl.addEventListener('pointerup',function(ev){ endSwipe(ev,false); });
+  fieldEl.addEventListener('pointercancel',function(ev){ endSwipe(ev,true); });
+
+  /* Returns true if a held breath was spent to save the chain. A held breath
+     covers a miss or an ink tap — never a stray tap into empty water. */
+  function breakChain(silent,canSave){
+    if(canSave&&streak>=1&&held>0){
+      held--; saves++;
+      heldSnd();
+      syncHud();
+      return true;
+    }
+    if(streak>=5&&!silent){
+      note(freqOf(midiFor(0)),{dur:1.3,vol:0.09,glass:0.4,slide:false,simple:true});
+    }
+    if(streak>=3&&alien&&alien.t<ALIEN_LIFE-2&&alien.sad<0.4) alienSad();
+    if(streak>=2) snapLinks();
+    streak=0; lastMult=1; lastPop=null; chainDrop();
+    return false;
+  }
+
+  // Handles popping one bubble: ink stings and ends here; everything else
+  // scores points (with height/link/chain multipliers), plays its sound,
+  // applies its kind-specific effect (breath, held, tide, treasure, split),
+  // and updates the chain/HUD/zone. The single call every bubble pop goes through.
+  function hitBubble(b){
+    var pace=popPace();
+    if(b.kind==='ink'){
+      inked++;
+      var saved=breakChain(true,true), m=MODES[mode];
+      score=Math.max(0,score-12);
+      burst(b,reduce?4:14);
+      flash(true); inkSnd(b,pace); inkCloud(b);
+      floatScore(b.x,b.y,'−12',PAL.bad,14);
+      if(m.clock){
+        timeLeft=Math.max(0,timeLeft-5);            // the clock runs out on the next frame if this empties it
+        floatScore(b.x,b.y-b.r-22,'−5s',PAL.bad,16);
+      } else if(m.air && !(saved && mode==='breath')){
+        air=Math.max(0,air-1);                      // ink stings like an escape: a breath
+      }
+      syncHud();
+      if(m.air && air<=0) gameOver('ink');
+      return;
+    }
+    burst(b);
+    popped++; streak++;
+    chainFx(b);
+    var mv=multiplier();
+    if(mv>bestChain) bestChain=mv;
+
+    var base=Math.max(5,Math.round((58-b.r)/2));
+    var hm=heightMul(b), lm=linkMul(b);
+    var pts=Math.round(base*mv*hm*lm);
+    var col=PAL.pop, tag='', chestBonus=0;
+    if(hm>1.45){ col=PAL.hot; tag='↑'; }
+    if(lm>1.25) tag+='·';
+
+    if(b.kind==='air'){
+      breaths++; airSnd(b,pace);
+      col=PAL.airC;
+      for(var ab2=0;ab2<(reduce?4:14);ab2++){
+        bits.push({x:b.x,y:b.y,vx:(Math.random()-0.5)*70,vy:-40-Math.random()*70,
+                   r:1.2+Math.random()*2.4,life:0,max:.7,c:PAL.airC});
+      }
+      if(MODES[mode].clock){
+        timeLeft=Math.min(MODES[mode].clock,timeLeft+3);
+        floatScore(b.x,b.y-b.r-22,'+3s',PAL.airC,16);
+      } else {
+        if(air<airCap()){
+          air++;
+          floatScore(b.x,b.y-b.r-22,'+1 breath',PAL.airC,14);
+          elAir.classList.add('gain');
+          setTimeout(function(){ elAir.classList.remove('gain'); },420);
+        }
+      }
+    } else if(b.kind==='pearl'){
+      pts*=3; pearls++; pearlSnd(b,pace);
+      col=PAL.gold;
+      if(held<HELD_MAX) held++;
+    } else if(b.kind==='star'){
+      // a fresh tide doubles; a second star inside one triples and tops it up
+      var fresh=tideT<=0;
+      tideLevel=fresh?2:Math.min(3,tideLevel+1);
+      tideT=Math.min(20,tideT+10); tideMax=fresh?10:Math.max(tideMax,tideT);
+      treasures++; treasureSnd(b,'star',pace); col=PAL.star;
+      banner={text:'×'+tideLevel,sub:'S T A R   T I D E',life:0,max:1.4,c:PAL.star,item:true};
+    } else if(b.kind==='horse'){
+      streak+=5; mv=multiplier(); if(mv>bestChain) bestChain=mv;
+      pts=Math.round(base*mv*hm*lm);
+      treasures++; treasureSnd(b,'horse',pace); col=PAL.horse;
+      banner={text:'×'+streak,sub:'S E A H O R S E',life:0,max:1.3,c:PAL.horse,item:true};
+      for(var hs=0;hs<(reduce?4:12);hs++){
+        bits.push({x:b.x,y:b.y,vx:(Math.random()-0.5)*90,vy:-40-Math.random()*80,r:1.4+Math.random()*2,life:0,max:1,c:PAL.horse,g:-30});
+      }
+    } else if(b.kind==='chest'){
+      chestBonus=1000*(zoneIdx+1); pts+=chestBonus;
+      treasures++; treasureSnd(b,'chest',pace); col=PAL.chest;
+      for(var cb=0;cb<(reduce?8:26);cb++){
+        var ca=-Math.PI/2+(Math.random()-0.5)*2.2, cs2=120+Math.random()*170;
+        bits.push({x:b.x,y:b.y,vx:Math.cos(ca)*cs2,vy:Math.sin(ca)*cs2,r:2+Math.random()*2.4,life:0,max:1.1+Math.random()*0.4,c:PAL.chest});
+      }
+      if(!reduce) shakeT=Math.max(shakeT,0.25);
+    } else if(b.kind==='cluster'){
+      clusterSnd(b,pace);
+    } else {
+      popNote(b,pace);
+    }
+    if(lastPop) links.push({x1:lastPop.x,y1:lastPop.y,x2:b.x,y2:b.y,life:0,max:0.95,
+                            c:chainColor(),w:Math.min(6,1.6+streak*0.22)});
+    lastPop={x:b.x,y:b.y};
+
+    if(Math.floor(streak/5)>Math.floor(lastMult/5)){   // a seahorse can jump a milestone
+      lastMult=streak;
+      chainSwell(Math.min(9,streak/5+1),pace);
+      chainMilestone(b);
+      maybeAlien(Math.min(6,streak/5+1));
+    }
+    if(tideT>0){ pts=Math.round(pts*tideLevel); tag+='★'; }
+    if(chestBonus) banner={text:'+'+fmt(Math.round(chestBonus*tideMul())),sub:'T R E A S U R E',life:0,max:1.6,c:PAL.chest,item:true};
+    score+=pts;
+    floatScore(b.x,b.y-b.r-6,'+'+fmt(pts)+tag,col,b.kind==='chest'?22:mv>=10?17:15);
+    if(b.kind!=='cluster' && respawn.length<6) respawn.push(0.28+rnd()*0.5);
+    if(b.kind==='cluster'){
+      for(var k=0;k<2;k++){
+        var nr=Math.max(11,b.r*0.52);
+        bubbles.push(makeBubble({
+          x:Math.min(Math.max(nr+5,b.x+(k?1:-1)*b.r*0.6),W-nr-5),
+          y:b.y+(k?6:-6), r:nr, kind:'plain', spdMul:1.1
+        }));
+      }
+    }
+    checkZone();
+    syncHud();
+  }
+
+  /* ════════ SETUP ════════ */
+  // Wires up a segmented-control group: clicking a button marks it pressed
+  // (and the rest unpressed) and calls onPick with its data-v value.
+  function wireSeg(el,onPick){
+    el.addEventListener('click',function(ev){
+      var btn=ev.target.closest('button'); if(!btn) return;
+      var kids=el.querySelectorAll('button');
+      for(var i=0;i<kids.length;i++) kids[i].setAttribute('aria-pressed',kids[i]===btn?'true':'false');
+      onPick(btn.getAttribute('data-v'));
+    });
+  }
+  var modeHint=document.getElementById('modeHint');
+  // Rebuilds the mode-hint paragraph on the start screen from the current
+  // mode/difficulty/daily selection and that combo's best score.
+  function updateHint(){
+    var d=DIFF[diff];
+    modeHint.textContent=
+      (daily?"Today's water — "+todayKey()+", the same bubbles for everyone. ":'')
+      +MODES[mode].hint
+      + (mode==='survival'?d.label:diff.charAt(0).toUpperCase()+diff.slice(1)+' current.') + (getBest()?' Best here: '+fmt(getBest())+'.':'');
+  }
+  wireSeg(document.getElementById('modeSeg'),function(v){ mode=v; updateHint(); syncHud(); });
+  wireSeg(document.getElementById('diffSeg'),function(v){ diff=v; updateHint(); syncHud(); });
+  wireSeg(document.getElementById('dailySeg'),function(v){ daily=(v==='daily'); updateHint(); });
+
+  /* Tapping a voice plays three pops — large, middle, small — so the size
+     mapping is audible as well as the timbre. */
+  function previewVoice(){
+    if(!soundOn){ toast('Sound is off — turn it on to hear this'); return; }
+    ac();
+    var sizes=[42,27,15];
+    for(var i=0;i<sizes.length;i++){
+      (function(r,k){
+        setTimeout(function(){
+          popNote({x:W*(0.3+k*0.2),y:H*0.5,r:r,kind:'plain'});
+        },k*190);
+      })(sizes[i],i);
+    }
+  }
+  var voiceSeg=document.getElementById('voiceSeg');
+  (function(){
+    var kids=voiceSeg.querySelectorAll('button');
+    for(var i=0;i<kids.length;i++){
+      kids[i].setAttribute('aria-pressed', kids[i].getAttribute('data-v')===voiceKind?'true':'false');
+    }
+  })();
+  wireSeg(voiceSeg,function(v){
+    voiceKind=v;
+    try{ localStorage.setItem('st.voice',v); }catch(e){}
+    previewVoice();
+  });
+
+  /* ════════ SUB-PAGES ════════
+     The home screen keeps only what you need to start; settings and the
+     field guide open over it. */
+  var subPages={settings:document.getElementById('settingsVeil'), guide:document.getElementById('guideVeil')};
+  var subOpener=null;
+  // Opens the Settings or Guide sub-page over the start screen, remembering
+  // which button opened it so focus can return there on close.
+  function openSub(name,btn){
+    subOpener=btn; startVeil.hidden=true;
+    var page=subPages[name]; page.hidden=false; page.scrollTop=0;
+    page.querySelector('.btn.ghost').focus();
+  }
+  // Closes any open sub-page back to the start screen. Returns whether one
+  // was actually open, so Escape can tell "closed a sub-page" from "did nothing."
+  function closeSubs(){
+    var open=false;
+    for(var k in subPages){ if(!subPages[k].hidden){ subPages[k].hidden=true; open=true; } }
+    if(open){ startVeil.hidden=false; updateHint(); if(subOpener) subOpener.focus(); }
+    return open;
+  }
+  document.getElementById('settingsBtn').addEventListener('click',function(){ openSub('settings',this); });
+  document.getElementById('guideBtn').addEventListener('click',function(){ openSub('guide',this); });
+  document.getElementById('settingsBack').addEventListener('click',closeSubs);
+  document.getElementById('guideBack').addEventListener('click',closeSubs);
+
+  /* ════════ RESULT ════════ */
+  var shareBox=document.getElementById('shareBox');
+  // Builds the plain-text summary of a finished dive for the Copy Result button.
+  function resultText(){
+    var d=new Date();
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var head='Surface Tension — '+(daily?"Today's dive ":'')+d.getDate()+' '+months[d.getMonth()];
+    return head+'\n'
+      +fmt(score)+' · '+fmt(depthMeters())+' m · '+zone().name+'\n'
+      +'Longest chain ×'+bestChain+' · '+popped+' popped'
+      +(pearls?' · '+pearls+' pearl'+(pearls>1?'s':''):'')+'\n'
+      +MODES[mode].name+' · '+diff.charAt(0).toUpperCase()+diff.slice(1);
+  }
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    var txt=resultText();
+    var done=function(){ toast('Result copied','good'); };
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done,function(){ showBox(txt); });
+        return;
+      }
+    }catch(e){}
+    showBox(txt);
+  });
+  // Fallback for browsers/contexts without clipboard API access: shows the
+  // result text in a selected, focused textarea for the player to copy manually.
+  function showBox(txt){
+    shareBox.value=txt; shareBox.hidden=false;
+    shareBox.focus(); shareBox.select();
+    toast('Copy it from the box','good');
+  }
+
+  /* ════════ FLOW ════════ */
+  // Resets all per-dive state, shows the 3-2-1 countdown, starts the drone,
+  // and flips STATE to 'playing' once it finishes (handling the edge case
+  // of the tab having been backgrounded during the count itself).
+  function startCountdown(){
+    startVeil.hidden=true; overVeil.hidden=true;
+    shareBox.hidden=true; depthChip.hidden=false;
+    seedNow();
+    bubbles.length=0; bits.length=0; rings.length=0; respawn.length=0;
+    pops.length=0; links.length=0;
+    chainPulse=0; chainHeat=0; banner=null; shakeT=0;
+    tideT=0; tideLevel=1; itemCool=14; treasures=0; clouds.length=0;
+    score=0; streak=0; lastMult=1; bestChain=1; elapsed=0; wave=1; spawnTimer=0;
+    popped=0; missed=0; pearls=0; inked=0; saves=0; breaths=0; airCool=14;
+    zoneIdx=0; gradKey=''; lastPop=null;
+    held=0; air=airCap(); timeLeft=MODES[mode].clock;
+    alien=null; alienCooldown=10; puffs.length=0;
+    syncHud();
+    STATE='counting'; cdVeil.hidden=false;
+    var n=3; cdNum.textContent=n;
+    ac(); chainDrop();
+    var iv=setInterval(function(){
+      n--;
+      if(n>0){ cdNum.textContent=n; note(scaleFreq(3+n),{dur:0.5,vol:0.16,glass:0.7,echo:false}); }
+      else{
+        clearInterval(iv);
+        cdVeil.hidden=true;
+        STATE='playing'; last=0; spawnTimer=0.2; pauseBtn.hidden=false;
+        if(document.hidden) pauseGame();         // the tab was left during the countdown
+        // Only now — not at the top of the countdown — does the track come
+        // in, so it starts cleanly on its own downbeat instead of arriving
+        // partway through a fade right as "3, 2, 1" finishes.
+        musicSet(true);
+        // dry and punchy: the fanfare doesn't need its own trailing echo
+        note(scaleFreq(7),{dur:1.0,vol:0.19,glass:0.8,echo:false});
+        note(scaleFreq(9),{when:0.06,dur:1.1,vol:0.15,glass:0.9,echo:false});
+        note(scaleFreq(12),{when:0.12,dur:1.3,vol:0.12,glass:1,echo:false});
+      }
+    },700);
+  }
+  // Ends the current dive (reason: 'air'|'ink'|'time'|'ended'), stops the
+  // drone, records a new best if this run beat it, and fills in and shows
+  // the results screen.
+  function gameOver(reason){
+    if(STATE!=='playing') return;
+    STATE='over'; pauseBtn.hidden=true; pauseVeil.hidden=true;
+    respawn.length=0; tideT=0; tideLevel=1;
+    musicSet(false); chainDrop();
+    note(scaleFreq(7),{dur:1.4,vol:0.14,glass:0.7,slide:false});
+    note(scaleFreq(4),{when:0.22,dur:1.6,vol:0.13,glass:0.5,slide:false});
+    note(freqOf(midiFor(0)-12),{when:0.44,dur:2.6,vol:0.14,glass:0.2,slide:false});
+    var prev=getBest(), isBest=score>prev;
+    if(isBest){
+      bests[bestKey()]=score;
+      try{ localStorage.setItem('st.bests',JSON.stringify(bests)); }catch(e){}
+    }
+    document.getElementById('fScore').textContent=fmt(score);
+    document.getElementById('fDepth').textContent=fmt(depthMeters())+' m';
+    document.getElementById('fChain').textContent='×'+bestChain;
+    document.getElementById('fBest').textContent=fmt(getBest());
+    var acc=popped+missed?Math.round(popped/(popped+missed)*100):0;
+    var extra=[];
+    if(pearls) extra.push(pearls+(pearls===1?' pearl':' pearls'));
+    if(breaths) extra.push(breaths+' air '+(breaths===1?'pocket':'pockets'));
+    if(saves) extra.push(saves+' saved');
+    if(inked) extra.push(inked+' ink');
+    if(treasures) extra.push(treasures+(treasures===1?' treasure':' treasures'));
+    document.getElementById('overNote').textContent=
+      zone().name+' · '+popped+' popped · '+acc+'% caught'+(extra.length?' · '+extra.join(' · '):'');
+    var m=MODES[mode];
+    document.getElementById('overTitle').textContent=
+      reason==='ink'?'Inked':reason==='time'?"Time's up":reason==='ended'?'Dive ended':mode==='breath'?'One got away':'You surfaced';
+    document.getElementById('overTag').textContent=
+      isBest&&score>0?'New personal best':reason==='time'?m.name+' complete':reason==='ended'?m.name:'Out of air';
+    shareBox.hidden=true;
+    overVeil.hidden=false;
+    updateHint();
+  }
+  /* ════════ TITLE ════════ */
+  var titleEl=document.getElementById('title');
+  // Re-measures the title's rendered width and repositions each letter's
+  // clipped gradient copy so the colour sweep lines up as one continuous
+  // gradient across "Surface Tension" rather than resetting per letter.
+  function alignTitle(){
+    var w=titleEl.scrollWidth; if(!w) return;           // hidden: wait until it shows
+    var chs=titleEl.querySelectorAll('.ch');
+    for(var i=0;i<chs.length;i++){
+      chs[i].style.backgroundSize=w+'px 100%';
+      chs[i].style.backgroundPosition=(-chs[i].offsetLeft)+'px 0';
+    }
+  }
+  // fires on font load, resize, and each time the start screen reappears
+  if(window.ResizeObserver) new ResizeObserver(alignTitle).observe(titleEl);
+  else { window.addEventListener('resize',alignTitle); if(document.fonts) document.fonts.ready.then(alignTitle); }
+  alignTitle();
+
+  /* ════════ PAUSE ════════ */
+  var pauseBtn=document.getElementById('pauseBtn'), pauseVeil=document.getElementById('pauseVeil');
+  // Pauses an in-progress dive: freezes the loop, stops the drone, and
+  // shows the pause screen with a summary of where the dive stands.
+  function pauseGame(){
+    if(STATE!=='playing') return;
+    STATE='paused'; musicSet(false); chainDrop();
+    document.getElementById('pauseNote').textContent=
+      fmt(score)+' · '+fmt(depthMeters())+' m · '+zone().name+(MODES[mode].clock?' · '+fmtTime(timeLeft)+' left':'');
+    pauseVeil.hidden=false;
+    document.getElementById('resumeBtn').focus();
+  }
+  // Resumes a paused dive.
+  function resumeGame(){
+    if(STATE!=='paused') return;
+    pauseVeil.hidden=true; STATE='playing'; last=0; musicSet(true);
+  }
+  pauseBtn.addEventListener('click',pauseGame);
+  document.getElementById('resumeBtn').addEventListener('click',resumeGame);
+  document.getElementById('endBtn').addEventListener('click',function(){
+    if(STATE!=='paused') return;
+    STATE='playing'; gameOver('ended');
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&STATE!=='playing'&&STATE!=='paused'&&closeSubs()){ e.preventDefault(); return; }
+    if(e.key!=='p'&&e.key!=='P'&&e.key!=='Escape') return;
+    if(STATE==='playing'){ e.preventDefault(); pauseGame(); }
+    else if(STATE==='paused'){ e.preventDefault(); resumeGame(); }
+  });
+
+  document.getElementById('startBtn').addEventListener('click',startCountdown);
+  document.getElementById('againBtn').addEventListener('click',startCountdown);
+  document.getElementById('backBtn').addEventListener('click',function(){
+    overVeil.hidden=true; startVeil.hidden=false; STATE='idle'; depthChip.hidden=true;
+    zoneIdx=0; score=0; gradKey=''; held=0; updateHint(); syncHud();
+  });
+
+  document.addEventListener('visibilitychange',function(){
+    // leaving the tab mid-dive pauses it; coming back waits for Resume
+    if(document.hidden){ pauseGame(); last=0; musicSet(false); chainDrop(); }
+  });
+  document.addEventListener('dblclick',function(e){ e.preventDefault(); },{passive:false});
+
+  resize(); updateHint(); syncHud();
+  for(var s2=0;s2<5;s2++) spawn(true);
+
+  // Merges best scores hydrated from the artifact host's saved snapshot
+  // (see window.claude.hot below) into the local ones, keeping whichever is higher.
+  function boot(data){
+    if(data&&data.bests){
+      for(var k in data.bests){ if(!bests[k]||data.bests[k]>bests[k]) bests[k]=data.bests[k]; }
+      updateHint();
+    }
+  }
+  if(window.claude&&window.claude.hot){
+    try{
+      window.claude.hot.snapshot(function(){ return {bests:bests}; });
+      window.claude.hot.ready?window.claude.hot.ready(boot):boot(window.claude.hot.data||{});
+    }catch(e){}
+  }
+})();
+</script>
+
+</body></html>

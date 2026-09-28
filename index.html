@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Lab — Games, Apps &amp; Experiments</title>
+  <meta name="description" content="A personal lab of AI-built games, apps and experiments.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <!-- Apply saved/system theme before paint to avoid a flash -->
+  <script>
+    (function () {
+      var d = document.documentElement, t = null;
+      d.className += " js";
+      try { t = localStorage.getItem("theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      d.setAttribute("data-theme", t);
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#projects">Skip to projects</a>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="AI Lab home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">AI&nbsp;Lab</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#projects">Projects</a>
+        <a href="#about">About</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode" data-magnetic>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" id="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <canvas class="hero-bubbles" id="hero-bubbles" aria-hidden="true"></canvas>
+      <div class="container hero-content">
+        <p class="eyebrow">Built with AI · Shipped for fun</p>
+        <h1 aria-label="AI-made games, apps and experiments">
+          <span class="gradient-text" aria-hidden="true">AI-made</span><br>
+          <span class="typed" id="typed" aria-hidden="true">games</span><span class="caret" aria-hidden="true"></span>
+        </h1>
+        <p class="lede">A personal lab for the things I build with AI — playable games, useful little tools, and whatever else comes out of the prompt.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#projects" data-magnetic>Explore projects</a>
+          <a class="btn btn-ghost" href="#about" data-magnetic>About the lab</a>
+        </div>
+        <dl class="stats" aria-label="Project counts">
+          <div><dt>Projects</dt><dd data-stat="all">0</dd></div>
+          <div><dt>Games</dt><dd data-stat="game">0</dd></div>
+          <div><dt>Apps</dt><dd data-stat="app">0</dd></div>
+          <div class="pop-stat"><dt>Bubbles popped</dt><dd id="popped">0</dd></div>
+        </dl>
+        <p class="hero-hint" aria-hidden="true">psst — the bubbles pop</p>
+      </div>
+    </section>
+
+    <section id="projects" class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Projects</h2>
+          <div class="filters" role="group" aria-label="Filter projects">
+            <button type="button" class="chip is-active" data-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-filter="game" aria-pressed="false">Games</button>
+            <button type="button" class="chip" data-filter="app" aria-pressed="false">Apps</button>
+            <button type="button" class="chip" data-filter="experiment" aria-pressed="false">Experiments</button>
+          </div>
+        </div>
+        <div class="grid" id="project-grid" aria-live="polite"></div>
+        <p class="empty" id="empty-state" hidden>Nothing here yet — check back soon.</p>
+      </div>
+    </section>
+
+    <section id="about" class="section section-alt">
+      <div class="container about">
+        <div class="reveal">
+          <h2>About the lab</h2>
+          <p>Every project here was designed, written or generated with the help of AI. Some are polished, some are rough prototypes — all of them are experiments in what's possible when you build alongside a model.</p>
+          <p>Have an idea or found a bug? Reach out on <a href="https://github.com/spec-ups">GitHub</a>.</p>
+        </div>
+        <ul class="about-list reveal" style="--d: 120ms">
+          <li><span class="dot dot-1"></span><strong>Games</strong> — playable in the browser, no install.</li>
+          <li><span class="dot dot-2"></span><strong>Apps</strong> — small tools that do one thing well.</li>
+          <li><span class="dot dot-3"></span><strong>Experiments</strong> — art, demos and one-offs.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span data-year></span> AI Lab</p>
+      <a href="https://github.com/spec-ups/spec-ups.github.io">Source on GitHub</a>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/projects.js"></script>
+  <script src="js/bubbles.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>
