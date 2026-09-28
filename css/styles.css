@@ -243,6 +243,10 @@ img { max-width: 100%; display: block; }
   color: var(--link);
   margin: 0 0 24px;
 }
+.eyebrow::before {
+  content: ""; width: 40px; height: 2px; border-radius: 2px; flex: none;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+}
 
 .hero h1 {
   font-size: clamp(2.6rem, 8vw, 5rem);
