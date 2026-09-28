@@ -1,5 +1,6 @@
 /*
- * Bubble burst used by the easter egg (Konami code / logo clicks).
+ * Bubble burst used by the easter egg (Konami code / logo clicks), and a
+ * field of poppable bubbles that project pages can use as their background.
  */
 (function () {
   "use strict";
@@ -113,5 +114,119 @@
     })();
   }
 
-  window.LabBubbles = { burst: burst };
+  /* ---------- Poppable background field ---------- */
+  // Bubbles rise slowly behind the page; tap one, or swipe through a few,
+  // to pop it. Popped bubbles come back from the bottom.
+  // Where the page has something solid or clickable, clicks go to that instead.
+  var SOLID = "a, button, input, textarea, select, label, dialog, video, iframe, " +
+    ".detail-section, .card, .detail-media, .site-header, .site-footer";
+
+  function field() {
+    var canvas = document.createElement("canvas");
+    canvas.className = "bubble-field";
+    canvas.setAttribute("aria-hidden", "true");
+    document.body.insertBefore(canvas, document.body.firstChild);
+    var ctx = canvas.getContext("2d");
+    var W = 0, H = 0, palette = readPalette();
+    var bubbles = [], pops = [], raf = 0, last = 0, dragging = false;
+
+    // (Re)start a bubble: anywhere on screen, or just below the bottom edge
+    function spawn(b, anywhere) {
+      b = b || {};
+      b.r = 8 + Math.pow(Math.random(), 1.5) * 30;
+      b.baseX = Math.random() * W;
+      b.x = b.baseX;
+      b.y = anywhere ? Math.random() * H : H + b.r + Math.random() * H * 0.3;
+      b.vy = 14 + b.r * 1.1 + Math.random() * 14; // px per second; big ones rise faster
+      b.phase = Math.random() * Math.PI * 2;
+      b.freq = 0.6 + Math.random() * 0.8;
+      b.sway = 4 + Math.random() * 12;
+      b.tint = Math.floor(Math.random() * 3);
+      b.alpha = 0.45 + Math.random() * 0.3;
+      return b;
+    }
+
+    function resize() {
+      W = window.innerWidth; H = window.innerHeight;
+      sizeCanvas(canvas, ctx, W, H);
+      var n = Math.max(10, Math.min(32, Math.round(W * H / 55000)));
+      while (bubbles.length < n) bubbles.push(spawn(null, true));
+      bubbles.length = n;
+      bubbles.forEach(function (b) { if (b.baseX > W) b.baseX = Math.random() * W; });
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      bubbles.forEach(function (b) { drawBubble(ctx, b, palette); });
+      pops = pops.filter(function (p) { return drawPop(ctx, p, palette); });
+    }
+
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+      last = now;
+      bubbles.forEach(function (b) {
+        b.y -= b.vy * dt;
+        b.phase += b.freq * dt;
+        b.x = b.baseX + Math.sin(b.phase) * b.sway;
+        if (b.y < -b.r) spawn(b, false);
+      });
+      draw();
+    }
+
+    // Topmost bubble under a point, with a little slack for fingers
+    function hit(x, y) {
+      for (var i = bubbles.length - 1; i >= 0; i--) {
+        var b = bubbles[i], dx = x - b.x, dy = y - b.y, r = b.r + 4;
+        if (dx * dx + dy * dy < r * r) return b;
+      }
+      return null;
+    }
+
+    function pop(b) {
+      if (reduceMotion) { spawn(b, true); draw(); return; }
+      pops.push(makePop(b));
+      spawn(b, false);
+    }
+
+    function target(e) {
+      var free = !(e.target.closest && e.target.closest(SOLID));
+      return free ? hit(e.clientX, e.clientY) : null;
+    }
+
+    document.addEventListener("pointerdown", function (e) {
+      var b = target(e);
+      dragging = true;
+      if (b) pop(b);
+    });
+    document.addEventListener("pointermove", function (e) {
+      var b = target(e);
+      document.documentElement.classList.toggle("over-bubble", !!b);
+      if (b && dragging && e.buttons) pop(b);
+    });
+    ["pointerup", "pointercancel"].forEach(function (type) {
+      document.addEventListener(type, function () { dragging = false; });
+    });
+
+    // Follow the theme's bubble tints
+    new MutationObserver(function () {
+      palette = readPalette();
+      draw();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    window.addEventListener("resize", resize);
+    resize();
+    if (reduceMotion) return; // still bubbles, popped without animation
+
+    function update() {
+      cancelAnimationFrame(raf);
+      last = 0;
+      if (!document.hidden) raf = requestAnimationFrame(frame);
+    }
+    document.addEventListener("visibilitychange", update);
+    update();
+  }
+
+  window.LabBubbles = { burst: burst, field: field };
 })();

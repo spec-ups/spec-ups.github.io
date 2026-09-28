@@ -31,6 +31,13 @@
     return;
   }
 
+  // A project can swap the inkblots for its own background
+  if (p.background === "bubbles" && window.LabBubbles) {
+    var ink = document.querySelector("[data-inkblots]");
+    if (ink) ink.remove();
+    window.LabBubbles.field();
+  }
+
   var d = p.details || {};
   document.title = p.title + " — AI Lab";
   var meta = document.querySelector('meta[name="description"]');

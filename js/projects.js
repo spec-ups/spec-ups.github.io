@@ -13,6 +13,8 @@
  *   emoji       - shown on the gradient thumbnail when there is no image
  *   tags        - short labels (tech, model, etc.)
  *   status      - optional badge, e.g. "New", "WIP"
+ *   background  - optional project page background: "bubbles" for poppable bubbles
+ *                 instead of the inkblots
  *   details     - optional content for the project page:
  *       intro         - list of paragraphs
  *       howTo         - list of steps ("How to play" / "How to use")
@@ -33,6 +35,7 @@ window.PROJECTS = [
     emoji: "🫧",
     tags: ["Canvas", "Web Audio", "Arcade"],
     status: "New",
+    background: "bubbles",
     details: {
       intro: [
         "Surface Tension is a fast arcade game of nerve and fingertips. Bubbles rise from the deep — tap them, or swipe through them, before they break the surface.",

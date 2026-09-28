@@ -601,6 +601,9 @@ body { position: relative; }
 }
 .spotlight.is-on { opacity: 1; }
 
+/* Poppable bubbles behind a project page (see LabBubbles.field in js/bubbles.js) */
+.bubble-field { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+html.over-bubble body { cursor: pointer; }
 .burst-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 90; pointer-events: none; }
 
 .toast {

@@ -10,6 +10,8 @@ Plain HTML/CSS/JS with no build step, published straight from `main` by GitHub P
 - Light and dark themes (follows the system setting until you pick one), with a circular reveal when switching
 - Rorschach-style inkblots scattered down every page: generated fresh on every visit, mirrored,
   and slowly seeping and shifting, carried on unbroken as you move between pages
+- Project pages can swap the inkblots for their own background: Surface Tension has
+  rising bubbles you can tap or swipe to pop (`background` in `js/projects.js`)
 - A headline that cycles through "games", "apps", "experiments" and more
 - Project cards that tilt toward the cursor, with a "Play here" button that opens the project
   in a pop-up without leaving the site
