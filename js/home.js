@@ -30,12 +30,15 @@
   /* ---------- Stats (count up when visible) ---------- */
   function countUp(node, target) {
     if (Lab.reduceMotion || target === 0) { node.textContent = target; return; }
-    var start = performance.now(), dur = 900;
-    (function step(now) {
+    var start = null, dur = 900;
+    requestAnimationFrame(function step(now) {
+      if (start === null) start = now;
       var k = Math.min(1, (now - start) / dur);
       node.textContent = Math.round(target * (1 - Math.pow(1 - k, 3)));
       if (k < 1) requestAnimationFrame(step);
-    })(start);
+    });
+    // Land on the real number even if frames are throttled (e.g. background tab)
+    setTimeout(function () { node.textContent = target; }, dur + 200);
   }
 
   var statNodes = document.querySelectorAll("[data-stat]");

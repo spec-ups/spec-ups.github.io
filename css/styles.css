@@ -246,11 +246,18 @@ img { max-width: 100%; display: block; }
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
 }
-.inkblot { position: absolute; height: auto; opacity: var(--ink-opacity); }
-.inkblot-a { width: min(620px, 70vw); top: 4%; right: -2%; }
-.inkblot-b { width: min(300px, 34vw); bottom: 6%; left: -4%; transform: rotate(-8deg); opacity: calc(var(--ink-opacity) * 0.7); }
+/* Drawn at half size and scaled up 2x: the ink filter re-runs every frame
+   while animating, and a quarter of the pixels keeps that cheap. The soft
+   edges hide the lower resolution. */
+.inkblot { position: absolute; height: auto; opacity: var(--ink-opacity); will-change: transform; }
+.inkblot-a { width: min(310px, 35vw); top: 4%; right: -2%; transform: scale(2); transform-origin: top right; }
+.inkblot-b {
+  width: min(150px, 17vw); bottom: 6%; left: -4%;
+  transform: rotate(-8deg) scale(2); transform-origin: bottom left;
+  opacity: calc(var(--ink-opacity) * 0.7);
+}
 @media (max-width: 700px) {
-  .inkblot-a { width: 110vw; right: -30vw; top: 12%; }
+  .inkblot-a { width: 55vw; right: -30vw; top: 12%; }
   .inkblot-b { display: none; }
 }
 
