@@ -1,7 +1,21 @@
-# index.html
-Home Website — a personal lab for AI-built games, apps and experiments.
+# spec-ups.github.io
 
-Plain HTML/CSS/JS with no build step, so it runs as-is on GitHub Pages.
+AI Lab: a personal site for the games, apps and experiments I build with AI.
+Live at **https://spec-ups.github.io**.
+
+Plain HTML/CSS/JS with no build step, published straight from `main` by GitHub Pages.
+
+## Features
+
+- Light and dark themes (follows the system setting until you pick one), with a circular reveal when switching
+- Rorschach-style inkblots in the hero background: generated fresh on every visit, mirrored,
+  and slowly seeping and shifting
+- A headline that cycles through "games", "apps", "experiments" and more
+- Project cards that tilt toward the cursor, with a "Play here" button that opens the project
+  in a pop-up without leaving the site
+- A page for each project (`project.html?id=...`) with how to play, modes and highlights
+- Optional "Ask the lab" chat, powered by Claude (see [worker/README.md](worker/README.md))
+- Respects "reduce motion": animations turn off for visitors who ask for that
 
 ## Structure
 
@@ -14,10 +28,17 @@ js/projects.js      your project list (edit this to add projects)
 js/main.js          shared: theme, cards, player pop-up, effects, chat
 js/home.js          home page: headline, stats, grid
 js/project.js       project page rendering
+js/inkblot.js       animated Rorschach inkblots in the hero
 js/bubbles.js       easter-egg bubble burst
 projects/           each self-contained project in its own folder
 worker/             optional "Ask the lab" chat backend (see worker/README.md)
 ```
+
+## Projects
+
+| Project | Type | Link |
+| --- | --- | --- |
+| Surface Tension | Game | [Play](https://spec-ups.github.io/projects/surface-tension/index.html) |
 
 ## Adding a project
 
@@ -42,10 +63,12 @@ worker/             optional "Ask the lab" chat backend (see worker/README.md)
 
 For hover previews, a 5–10 second muted clip under ~2 MB works well (`.mp4` or `.webm`).
 
-## Theme
+## Customising
 
-Light and dark palettes are defined as CSS variables at the top of `css/styles.css`.
-The site follows the visitor's OS setting until they use the toggle; their choice is then remembered.
+- **Colours:** the light and dark palettes are CSS variables at the top of `css/styles.css`.
+- **Inkblots:** `--ink` and `--ink-opacity` in the same place set their colour and strength;
+  the shapes and movement are in `js/inkblot.js`.
+- **Headline words:** the `WORDS` list in `js/home.js`.
 
 ## Secrets
 
@@ -57,5 +80,6 @@ Open `index.html` in a browser, or serve the folder (e.g. `npx serve .`).
 
 ## Publishing
 
-On GitHub: **Settings → Pages → Deploy from branch → `main` / root**.
+Pushing to `main` publishes the site. The repo must be public, with
+**Settings → Pages → Deploy from a branch → `main` / root** turned on.
 The chat needs its own deploy step, described in [worker/README.md](worker/README.md).
