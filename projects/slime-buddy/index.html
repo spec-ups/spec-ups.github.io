@@ -1,0 +1,2038 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slime Buddy</title>
+<meta name="description" content="A bouncy 3D slime with a mind of its own. Lead it, carry it, poke it, pet it and feed it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* A Minecraft slime gone kawaii, in a softer take on the AI Lab's
+     colours: periwinkle, violet and rose jelly on a floor of cloud. */
+  :root {
+    --slime-pale: #f7f1fc;
+    --slime-light: #e2d3f0;
+    --slime: #a58be6;
+    --slime-deep: #7537b0;
+    --slime-dark: #24163a;
+    --mint: #a9aef4;
+    --lilac: #c9b8ff;
+    --blush: #f2b0c0;
+    --sky-top: #eee6fb;
+    --sky-mid: #f9eef6;
+    --sky-low: #efe3f7;
+    --panel: rgba(255, 255, 255, 0.74);
+    --edge: rgba(117, 55, 176, 0.3);
+    --text: #24163a;
+    --muted: #6a5a82;
+    --heart: #e0708a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: "Fredoka", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-mid) 28%, var(--sky-low) 60%, #e6d7f2 100%);
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  canvas { position: relative; display: block; touch-action: none; }
+  canvas.grab { cursor: grab; }
+  canvas.grabbing { cursor: grabbing; }
+
+  /* ---------- Sky: drifting clouds and twinkling stars behind the cloud floor ---------- */
+  .sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .cloud {
+    position: absolute; height: 44px; border-radius: 44px; background: #fff; opacity: 0.9;
+    animation: drift linear infinite alternate;
+  }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+  .cloud::before { width: 44%; height: 160%; left: 14%; bottom: 25%; }
+  .cloud::after { width: 32%; height: 125%; right: 16%; bottom: 32%; }
+  @keyframes drift { to { transform: translateX(70px); } }
+  .star {
+    position: absolute; color: #fff; font-size: 14px; line-height: 1;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 3px var(--lilac);
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.1); } }
+
+  button {
+    font: 600 13px "Fredoka", sans-serif; color: var(--slime-dark);
+    background: var(--panel); border: 2px solid var(--edge); border-radius: 999px;
+    padding: 6px 14px; cursor: pointer;
+    box-shadow: 0 8px 18px -12px rgba(117, 55, 176, 0.55);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    transition: transform 0.12s, background 0.12s;
+  }
+  button:hover { background: #fff; transform: translateY(-1px); }
+  button:active { transform: scale(0.95); }
+  button:focus-visible { outline: 2px solid var(--slime-deep); outline-offset: 2px; }
+  button[aria-pressed="false"] { color: var(--muted); opacity: 0.7; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: max(14px, env(safe-area-inset-top)) 16px 0;
+    pointer-events: none;
+  }
+  .hud > * { pointer-events: auto; }
+  .card {
+    background: var(--panel); border: 2px solid var(--edge); border-radius: 18px;
+    box-shadow: 0 12px 28px -18px rgba(117, 55, 176, 0.55);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .title-card { padding: 8px 16px 9px; }
+  .title-card h1 { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .mood { margin: 1px 0 0; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .mood b { color: var(--text); font-weight: 600; }
+  .mood-dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--mint), var(--slime)); box-shadow: 0 0 0 2px #fff; }
+  .hud-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .brain { position: fixed; right: 16px; top: 76px; width: 240px; padding: 12px 16px 10px; font-size: 13px; }
+  .brain[hidden] { display: none; }
+  .brain h2, .brain h3 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .brain .doing { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+  .brain h3 { margin: 8px 0 3px; }
+  .meter { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 8px; margin: 3px 0; }
+  .meter i { display: block; height: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 99px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--edge); }
+  .meter b { display: block; height: 100%; width: 50%; border-radius: 99px; background: linear-gradient(90deg, var(--mint), var(--slime)); transition: width 0.25s; }
+  .meter.feel b { background: linear-gradient(90deg, var(--lilac), var(--blush)); }
+  .meter.bond b { background: linear-gradient(90deg, var(--blush), var(--heart)); }
+  .visits { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+
+  .hint {
+    position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: max-content; max-width: calc(100vw - 32px);
+    margin: 0; padding: 7px 16px; border-radius: 18px;
+    font-size: 13px; text-align: center; color: var(--muted);
+    pointer-events: none; transition: opacity 1s;
+  }
+  .hint b { color: var(--text); font-weight: 600; }
+  .hint.faded { opacity: 0; }
+
+  /* ---------- Speech and emotes above the slime ---------- */
+  .bubble {
+    position: fixed; left: 0; top: 0; pointer-events: none;
+    padding: 6px 13px; border-radius: 16px; white-space: nowrap;
+    font-size: 14px; font-weight: 600; color: var(--slime-dark);
+    background: #fff; border: 2px solid var(--edge);
+    box-shadow: 0 10px 22px -14px rgba(117, 55, 176, 0.55);
+    transform: translate(-50%, -100%); opacity: 0; transition: opacity 0.2s;
+  }
+  .bubble::after {
+    content: ""; position: absolute; left: 50%; bottom: -7px; width: 10px; height: 10px; margin-left: -5px;
+    background: #fff; border: 2px solid var(--edge); border-top: 0; border-left: 0;
+    transform: rotate(45deg);
+  }
+  .bubble.show { opacity: 1; }
+
+  .fx {
+    position: fixed; left: 0; top: 0; pointer-events: none;
+    font-size: 22px; font-weight: 700; color: var(--slime-deep);
+    text-shadow: 0 2px 0 #fff, 0 0 8px #fff;
+    animation: float 1.6s ease-out forwards;
+  }
+  .fx.heart { color: var(--heart); }
+  .fx.zz { font-size: 18px; color: #8f7fd6; animation-duration: 2.4s; }
+  @keyframes float {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -70px) scale(1.15); }
+  }
+
+  @media (max-width: 700px) {
+    .hud { padding-left: 12px; padding-right: 12px; }
+    .title-card { padding: 6px 12px 7px; }
+    .title-card h1 { font-size: 16px; }
+    .mood { font-size: 13px; }
+    .hud-actions { gap: 6px; }
+    .hud-actions button { font-size: 12px; padding: 5px 11px; }
+    /* A compact two-column panel along the bottom */
+    .brain { top: auto; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; right: 12px; width: auto; padding: 8px 12px 6px; font-size: 12px; }
+    .brain h2 { display: none; }
+    .brain .doing { margin-bottom: 0; font-size: 14px; }
+    .brain h3 { margin: 4px 0 1px; }
+    .meters { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+    .meter { grid-template-columns: 66px 1fr; gap: 6px; margin: 2px 0; }
+    .hint { font-size: 12px; }
+    .brain:not([hidden]) ~ .hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fx { animation-duration: 0.8s; }
+    .cloud, .star { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="sky" id="sky" aria-hidden="true">
+    <div class="cloud" style="top: 9%; left: 6%; width: 190px; animation-duration: 38s"></div>
+    <div class="cloud" style="top: 17%; left: 58%; width: 250px; animation-duration: 52s"></div>
+    <div class="cloud" style="top: 5%; left: 78%; width: 150px; animation-duration: 44s"></div>
+    <div class="cloud" style="top: 22%; left: 24%; width: 210px; animation-duration: 60s"></div>
+  </div>
+
+  <header class="hud">
+    <div class="title-card card">
+      <h1>Slime Buddy</h1>
+      <p class="mood"><span class="mood-dot" aria-hidden="true"></span>Feeling <b id="mood">Calm</b></p>
+    </div>
+    <div class="hud-actions">
+      <button id="snack-btn" type="button">Snack</button>
+      <button id="ball-btn" type="button">Ball</button>
+      <button id="brain-btn" type="button" aria-expanded="true" aria-controls="brain">Brain</button>
+      <button id="sound-btn" type="button" aria-pressed="true">Sound</button>
+    </div>
+  </header>
+
+  <aside class="brain card" id="brain" aria-label="What the slime is thinking">
+    <h2>Right now</h2>
+    <p class="doing" id="doing">Looking around</p>
+    <h3>Needs</h3>
+    <div class="meters">
+      <div class="meter"><span>Energy</span><i><b data-m="energy"></b></i></div>
+      <div class="meter"><span>Fullness</span><i><b data-m="fullness"></b></i></div>
+      <div class="meter"><span>Company</span><i><b data-m="company"></b></i></div>
+      <div class="meter"><span>Fun</span><i><b data-m="fun"></b></i></div>
+    </div>
+    <h3>Feelings</h3>
+    <div class="meters">
+      <div class="meter feel"><span>Joy</span><i><b data-m="joy"></b></i></div>
+      <div class="meter feel"><span>Curiosity</span><i><b data-m="curiosity"></b></i></div>
+      <div class="meter feel"><span>Grumpiness</span><i><b data-m="annoyance"></b></i></div>
+      <div class="meter feel"><span>Fright</span><i><b data-m="fear"></b></i></div>
+      <div class="meter feel"><span>Dizziness</span><i><b data-m="dizzy"></b></i></div>
+      <div class="meter feel"><span>Sleepiness</span><i><b data-m="drowsy"></b></i></div>
+    </div>
+    <h3>You two</h3>
+    <div class="meter bond"><span>Friendship</span><i><b data-m="bond"></b></i></div>
+    <p class="visits" id="visits"></p>
+  </aside>
+
+  <p class="hint card" id="hint">
+    <b>Lead</b> it with your cursor or finger · <b>Drag</b> to carry or throw · <b>Tap</b> to poke ·
+    <b>Stroke</b> slowly to pet, fast to tickle · <b>Tap the ground</b> for a snack · Fling the <b>Ball</b> for fetch
+  </p>
+  <div class="bubble" id="bubble" aria-live="polite"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { DecalGeometry } from "three/addons/geometries/DecalGeometry.js";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const V3 = THREE.Vector3;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
+/* ==========================================================================
+   Scene: a floor of soft cloud that fades into a pastel sky
+   ========================================================================== */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+document.body.prepend(renderer.domElement);
+const canvas = renderer.domElement;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+
+// A soft studio environment gives the jelly its glossy reflections and sheen
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.35;
+scene.add(new THREE.HemisphereLight(0xfbf7ff, 0xc4b0e6, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(-4, 10, 7);
+scene.add(sun);
+
+// Twinkling stars in the sky band
+(() => {
+  const sky = document.getElementById("sky");
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement("span");
+    s.className = "star";
+    s.textContent = "✦";
+    s.style.left = rand(3, 97) + "%";
+    s.style.top = rand(2, 30) + "%";
+    s.style.fontSize = rand(9, 17) + "px";
+    s.style.animationDelay = rand(0, 3) + "s";
+    sky.appendChild(s);
+  }
+})();
+
+function canvasTexture(size, paint, srgb = true) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  paint(c.getContext("2d"), size);
+  const tex = new THREE.CanvasTexture(c);
+  if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+// A tiling texture of overlapping cloud puffs, lit from the top left
+const cloudTex = canvasTexture(256, (g, n) => {
+  g.fillStyle = "#efe7f8";
+  g.fillRect(0, 0, n, n);
+  const puffs = [];
+  for (let i = 0; i < 46; i++) puffs.push([rand(0, n), rand(0, n), rand(16, 42)]);
+  // Shade first, then highlights, drawing each puff at every wrap so the tile is seamless
+  [["rgba(214,200,236,0.55)", 0.18, 1.08], ["rgba(255,255,255,0.95)", -0.16, 0.9]].forEach(([color, shift, grow]) => {
+    puffs.forEach(([x, y, r]) => {
+      for (const ox of [-n, 0, n]) for (const oy of [-n, 0, n]) {
+        const cx = x + ox + r * shift, cy = y + oy + r * shift, rr = r * grow;
+        const grad = g.createRadialGradient(cx, cy, 0, cx, cy, rr);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.6, color.replace(/[\d.]+\)$/, (m) => parseFloat(m) * 0.6 + ")"));
+        grad.addColorStop(1, color.replace(/[\d.]+\)$/, "0)"));
+        g.fillStyle = grad;
+        g.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
+      }
+    });
+  });
+});
+cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
+cloudTex.repeat.set(5, 5);
+cloudTex.anisotropy = 4;
+const fadeTex = canvasTexture(128, (g, n) => {
+  const grad = g.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+  grad.addColorStop(0.45, "#fff");
+  grad.addColorStop(1, "#000");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, n, n);
+}, false);
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(13, 80).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ map: cloudTex, alphaMap: fadeTex, transparent: true })
+);
+ground.position.z = -1;
+scene.add(ground);
+const groundPlane = new THREE.Plane(new V3(0, 1, 0), 0);
+
+// Soft round shadow, reused under the slime and snacks
+const shadowTex = canvasTexture(64, (g) => {
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(90,55,140,0.32)");
+  grad.addColorStop(1, "rgba(90,55,140,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+});
+function makeShadow(size) {
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })
+  );
+  m.position.y = 0.005;
+  m.renderOrder = 1;
+  scene.add(m);
+  return m;
+}
+
+// Where the slime may go; x is fitted to the screen in fit()
+const ARENA = { xMax: 5, zMin: -3.4, zMax: 2.3 };
+const LOOK = new V3(0, 0.7, -0.5);
+const raycaster = new THREE.Raycaster();
+const tmp = new V3();
+
+function placeCamera(d) {
+  camera.position.set(0, d * 0.56, LOOK.z + d * 0.83);
+  camera.lookAt(LOOK);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld();
+}
+// Half the visible ground width along the arena's near edge
+function halfWidthAt(z) {
+  const ndcY = tmp.set(0, 0, z).project(camera).y;
+  raycaster.setFromCamera(new THREE.Vector2(0.94, ndcY), camera);
+  const hit = raycaster.ray.intersectPlane(groundPlane, new V3());
+  return hit ? hit.x : 3;
+}
+function fit() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  let d = 12;
+  placeCamera(d);
+  while (halfWidthAt(ARENA.zMax) < 2.7 && d < 24) placeCamera(d += 0.5);
+  ARENA.xMax = clamp(halfWidthAt(ARENA.zMax) - 0.85, 1.7, 6.5);
+}
+window.addEventListener("resize", fit);
+fit();
+
+// Cloud billows banked up along the back, bobbing gently
+const puffMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xeee4fb, emissiveIntensity: 0.45 });
+const puffGeo = new THREE.SphereGeometry(1, 28, 18);
+const billows = [];
+function billow(r) {
+  const group = new THREE.Group();
+  const n = 4 + Math.floor(rand(0, 3));
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(puffGeo, puffMat);
+    const pr = r * rand(0.45, 0.8), a = (i / n) * Math.PI * 2 + rand(-0.3, 0.3), d = r * rand(0.25, 0.6);
+    m.scale.set(pr, pr * 0.8, pr);
+    m.position.set(Math.cos(a) * d, pr * 0.35 + rand(-0.1, 0.1), Math.sin(a) * d * 0.7);
+    group.add(m);
+  }
+  const top = new THREE.Mesh(puffGeo, puffMat);
+  top.scale.setScalar(r * 0.6);
+  top.position.y = r * 0.55;
+  group.add(top);
+  scene.add(group);
+  return { group, phase: rand(0, Math.PI * 2) };
+}
+// x is a fraction of the width; `back` is how far behind the slime's area each one sits
+const BILLOW_SPOTS = [
+  { fx: -0.5, back: 0, r: 1.6 }, { fx: 0.05, back: 0.6, r: 1.9 }, { fx: 0.55, back: 0.1, r: 1.5 },
+  { fx: -1.15, back: 1.2, r: 2 }, { fx: 1.2, back: 1, r: 2.1 }
+];
+BILLOW_SPOTS.forEach((spot) => billows.push({ ...billow(spot.r), spot }));
+function placeBillows() {
+  const w = Math.max(ARENA.xMax, 3), k = clamp(ARENA.xMax / 4.5, 0.55, 1); // smaller on narrow screens
+  billows.forEach(({ group, spot }) => {
+    // Keep the whole billow (up to 1.25 r deep) clear of the slime's reach at the back edge
+    const z = ARENA.zMin - 0.8 - spot.r * k * 1.25 - spot.back;
+    group.scale.setScalar(k);
+    group.position.set(spot.fx * (w + 1.5), 0, z);
+  });
+}
+placeBillows();
+window.addEventListener("resize", placeBillows);
+function bobBillows() {
+  billows.forEach((b) => { b.group.position.y = Math.sin(now * 0.6 + b.phase) * 0.06 - 0.05; });
+}
+
+/* ==========================================================================
+   The slime: a gumdrop of jelly, halfway between a Minecraft cube and a
+   kawaii blob. Periwinkle on top shading through lilac to rose underneath,
+   with a rainbow sheen, glossy highlights, a soft core, stubby arms and a
+   painted face.
+   ========================================================================== */
+const BODY = { w: 1.4, h: 1.15, d: 1.25 };
+const SIZE = BODY.h;
+const COLORS = {
+  base: new THREE.Color(0xffffff),
+  happy: new THREE.Color(0xfff6fa),
+  grumpy: new THREE.Color(0xe4d0d8),
+  sleepy: new THREE.Color(0xd8dcf2),
+  scared: new THREE.Color(0xf8f6ff)
+};
+
+const JELLY = [[0, "#eea7aa"], [0.38, "#b596ea"], [0.72, "#9294f2"], [1, "#cfccff"]]
+  .map(([t, c]) => [t, new THREE.Color(c)]);
+function jellyColor(x, y, out) {
+  const t = clamp(y / BODY.h * 0.85 - x / BODY.w * 0.3 + 0.12);
+  for (let i = 1; i < JELLY.length; i++) {
+    if (t <= JELLY[i][0]) {
+      const [t0, c0] = JELLY[i - 1], [t1, c1] = JELLY[i];
+      return out.lerpColors(c0, c1, (t - t0) / (t1 - t0));
+    }
+  }
+  return out.copy(JELLY[JELLY.length - 1][1]);
+}
+function paint(geo, dx = 0, dy = 0) {
+  const p = geo.attributes.position, colors = new Float32Array(p.count * 3), c = new THREE.Color();
+  for (let i = 0; i < p.count; i++) jellyColor(p.getX(i) + dx, p.getY(i) + dy, c).toArray(colors, i * 3);
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  return geo;
+}
+
+// A sphere pushed part-way to a cube (a superellipsoid), flatter underneath
+// and a little narrower on top
+function blobGeometry() {
+  let g = new THREE.SphereGeometry(1, 56, 36);
+  g.deleteAttribute("normal");
+  g.deleteAttribute("uv");
+  g = mergeVertices(g);
+  const p = g.attributes.position;
+  const se = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e);
+  for (let i = 0; i < p.count; i++) {
+    const y = se(p.getY(i), p.getY(i) < 0 ? 0.35 : 0.62);
+    const t = (y + 1) / 2;
+    const taper = 1.08 - 0.2 * t;
+    p.setXYZ(i, se(p.getX(i), 0.6) * BODY.w / 2 * taper, t * BODY.h, se(p.getZ(i), 0.6) * BODY.d / 2 * taper);
+  }
+  g.computeVertexNormals();
+  return paint(g);
+}
+
+const body = new THREE.Group();
+body.matrixAutoUpdate = false;
+scene.add(body);
+
+const jellyMat = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, vertexColors: true, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.1,
+  iridescence: 0.4, iridescenceIOR: 1.35, iridescenceThicknessRange: [180, 480],
+  transparent: true, opacity: 0.84, depthWrite: false
+});
+const jelly = new THREE.Mesh(blobGeometry(), jellyMat);
+jelly.renderOrder = 3;
+body.add(jelly);
+body.updateMatrixWorld(true);
+
+// The Minecraft slime's inner cube, softened into a glowing core
+const core = new THREE.Mesh(
+  new THREE.SphereGeometry(0.34, 24, 16).scale(1.15, 0.95, 1).translate(0, BODY.h * 0.44, -0.08),
+  new THREE.MeshBasicMaterial({ color: 0x7537b0, transparent: true, opacity: 0.28, depthWrite: false })
+);
+core.renderOrder = 1;
+body.add(core);
+
+// Find a point on the jelly's surface, looking in from outside along `dir`
+const CENTER = new V3(0, BODY.h * 0.5, 0);
+function surface(dir) {
+  const d = dir.clone().normalize();
+  raycaster.set(CENTER.clone().addScaledVector(d, 3), d.negate());
+  return raycaster.intersectObject(jelly, false)[0];
+}
+// Paint a texture onto the jelly's curved surface
+function decal(dir, w, h, map, { spin = 0, depth = 0.5, order = 5, opacity = 1 } = {}) {
+  const hit = surface(dir);
+  const aim = new THREE.Object3D();
+  aim.position.copy(hit.point);
+  aim.lookAt(hit.point.clone().add(hit.face.normal));
+  aim.rotateZ(spin);
+  const m = new THREE.Mesh(
+    new DecalGeometry(jelly, hit.point, aim.rotation, new V3(w, h, depth)),
+    new THREE.MeshBasicMaterial({ map, transparent: true, opacity, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 })
+  );
+  m.renderOrder = order;
+  body.add(m);
+  return m;
+}
+
+// Glossy highlights, like light catching wet jelly
+const glossTex = canvasTexture(64, (g) => {
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(255,255,255,1)");
+  grad.addColorStop(0.72, "rgba(255,255,255,0.95)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+});
+decal(new V3(-0.55, 0.75, 0.6), 0.34, 0.19, glossTex, { spin: 0.55, opacity: 0.9 });
+decal(new V3(-0.2, 0.92, 0.45), 0.09, 0.09, glossTex, { opacity: 0.9 });
+decal(new V3(0.8, -0.05, 0.55), 0.1, 0.22, glossTex, { spin: 0.25, opacity: 0.65 });
+decal(new V3(0.55, 0.62, 0.55), 0.06, 0.06, glossTex, { opacity: 0.8 });
+
+// The face is drawn live to a canvas and painted onto the front of the jelly
+const faceCanvas = document.createElement("canvas");
+faceCanvas.width = faceCanvas.height = 256;
+const fx = faceCanvas.getContext("2d");
+const faceTex = new THREE.CanvasTexture(faceCanvas);
+faceTex.colorSpace = THREE.SRGBColorSpace;
+faceTex.anisotropy = 4;
+decal(new V3(0, 0.03, 1), 1.0, 1.0, faceTex, { depth: 0.9, order: 4 });
+
+// Stubby arms that wave, flail and bop
+const arms = [-1, 1].map((side) => {
+  const hit = surface(new V3(side, -0.15, 0.2));
+  const pivot = new THREE.Group();
+  pivot.position.copy(hit.point).addScaledVector(hit.face.normal, -0.09);
+  const mesh = new THREE.Mesh(
+    paint(new THREE.CapsuleGeometry(0.11, 0.13, 6, 12).translate(0, -0.13, 0), pivot.position.x, pivot.position.y),
+    jellyMat
+  );
+  mesh.renderOrder = 3;
+  pivot.add(mesh);
+  body.add(pivot);
+  return { side, pivot, mesh, a: 0.35, av: 0 };
+});
+
+const slimeShadow = makeShadow(BODY.w * 1.45);
+
+/* ---------- Face ---------- */
+const EYE = "#24163a", TONGUE = "#ff7f9f", BLUSH = "#ff9fc0", TEAR = "#a9c8ff";
+const L = { eyeY: 110, eyeDX: 62, r: 30, mouthY: 152 };
+const PI = Math.PI;
+
+function ellipse(x, y, rx, ry, color) {
+  fx.beginPath();
+  fx.ellipse(x, y, rx, ry, 0, 0, PI * 2);
+  fx.fillStyle = color;
+  fx.fill();
+}
+function pen(w) { fx.lineWidth = w; fx.strokeStyle = EYE; fx.lineCap = "round"; fx.lineJoin = "round"; }
+function arcLine(x, y, r, a0, a1, w = 7) { fx.beginPath(); fx.arc(x, y, r, a0, a1); pen(w); fx.stroke(); }
+function line(x0, y0, x1, y1, w = 6) { fx.beginPath(); fx.moveTo(x0, y0); fx.lineTo(x1, y1); pen(w); fx.stroke(); }
+function sparkle(x, y, s) {
+  fx.beginPath();
+  fx.moveTo(x, y - s);
+  fx.quadraticCurveTo(x, y, x + s, y);
+  fx.quadraticCurveTo(x, y, x, y + s);
+  fx.quadraticCurveTo(x, y, x - s, y);
+  fx.quadraticCurveTo(x, y, x, y - s);
+  fx.fillStyle = "#fff";
+  fx.fill();
+}
+// Big glossy anime eye: dark with a star glint and a small shine
+function eyeBall(x, y, r) {
+  const grad = fx.createRadialGradient(x, y + r * 0.55, r * 0.1, x, y, r);
+  grad.addColorStop(0, "#54407a");
+  grad.addColorStop(1, EYE);
+  ellipse(x, y, r, r * 1.06, grad);
+  sparkle(x - r * 0.3, y - r * 0.32, r * 0.5);
+  ellipse(x + r * 0.36, y + r * 0.36, r * 0.15, r * 0.15, "#fff");
+}
+// Eye centres, nudged towards where the slime is looking
+const eyesAt = (g) => [-1, 1].map((s) => [128 + s * L.eyeDX + g.x * 9, L.eyeY + g.y * 7, s]);
+const openEyes = (g, r = L.r) => eyesAt(g).forEach(([x, y]) => eyeBall(x, y, r));
+const happyEyes = () => eyesAt({ x: 0, y: 0 }).forEach(([x, y]) => arcLine(x, y + 12, 17, PI * 1.15, PI * 1.85));
+const closedEyes = () => eyesAt({ x: 0, y: 0 }).forEach(([x, y]) => arcLine(x, y - 8, 17, PI * 0.15, PI * 0.85));
+const spiralEyes = () => eyesAt({ x: 0, y: 0 }).forEach(([x, y]) => {
+  fx.beginPath();
+  for (let a = 0; a < PI * 4.2; a += 0.2) {
+    const rr = 2 + a * 1.7;
+    fx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  pen(5);
+  fx.stroke();
+});
+// Eyelids: `top` hides that much of each eye; `slant` > 0 angles the lids down
+// towards the middle (cross), with brows above when `brows` is set
+function lidEyes(g, top, slant = 0, brows = false) {
+  eyesAt(g).forEach(([x, y, s]) => {
+    const r = L.r, inward = -s;
+    const xIn = x + inward * (r + 4), xOut = x - inward * (r + 4);
+    const base = y - r + 2 * r * top;
+    const yIn = base + slant * r * 0.8, yOut = base - slant * r * 0.8;
+    fx.save();
+    fx.beginPath();
+    fx.moveTo(xOut, yOut); fx.lineTo(xIn, yIn); fx.lineTo(xIn, y + r + 6); fx.lineTo(xOut, y + r + 6);
+    fx.closePath();
+    fx.clip();
+    eyeBall(x, y, r);
+    fx.restore();
+    line(xOut + inward * 3, yOut, xIn - inward * 3, yIn, 6);
+    if (brows) line(xOut + inward * 4, yOut - 14, xIn - inward * 2, yIn - 12, 6);
+  });
+}
+function sadBrows(g) {
+  eyesAt(g).forEach(([x, y, s]) => line(x + s * L.r * 0.9, y - L.r - 8, x - s * L.r * 0.5, y - L.r - 20, 6));
+}
+function blush(a) {
+  fx.globalAlpha = Math.min(1, a * 1.4);
+  [-1, 1].forEach((s) => ellipse(128 + s * 90, 146, 18, 10, BLUSH));
+  fx.globalAlpha = 1;
+}
+function drop(x, y, s) {
+  fx.beginPath();
+  fx.moveTo(x, y - s * 1.6);
+  fx.quadraticCurveTo(x + s, y - s * 0.2, x + s * 0.8, y + s * 0.4);
+  fx.arc(x, y + s * 0.4, s * 0.8, 0, PI);
+  fx.quadraticCurveTo(x - s, y - s * 0.2, x, y - s * 1.6);
+  fx.fillStyle = TEAR;
+  fx.fill();
+}
+
+// ">" and "<": eyes screwed shut with laughter
+const squeezedEyes = () => eyesAt({ x: 0, y: 0 }).forEach(([x, y, s]) => {
+  fx.beginPath();
+  fx.moveTo(x + s * 12, y - 11); fx.lineTo(x - s * 10, y); fx.lineTo(x + s * 12, y + 11);
+  pen(7);
+  fx.stroke();
+});
+
+const MOUTHS = {
+  smile: () => arcLine(128, L.mouthY - 8, 12, PI * 0.2, PI * 0.8, 6),
+  small: () => arcLine(128, L.mouthY - 5, 8, PI * 0.25, PI * 0.75, 6),
+  open: () => {
+    const y = L.mouthY;
+    fx.beginPath();
+    fx.moveTo(112, y); fx.lineTo(144, y);
+    fx.quadraticCurveTo(144, y + 22, 128, y + 22);
+    fx.quadraticCurveTo(112, y + 22, 112, y);
+    fx.fillStyle = EYE;
+    fx.fill();
+    ellipse(128, y + 16, 8, 5, TONGUE);
+  },
+  cat: () => { arcLine(121, L.mouthY - 3, 7, PI * 0.1, PI * 0.9, 5); arcLine(135, L.mouthY - 3, 7, PI * 0.1, PI * 0.9, 5); },
+  o: () => ellipse(128, L.mouthY + 4, 6, 7, EYE),
+  big: () => { ellipse(128, L.mouthY + 6, 10, 13, EYE); ellipse(128, L.mouthY + 13, 6, 4, TONGUE); },
+  frown: () => arcLine(128, L.mouthY + 12, 11, PI * 1.2, PI * 1.8, 6),
+  wavy: () => {
+    fx.beginPath();
+    for (let i = 0; i <= 20; i++) fx.lineTo(112 + i * 1.6, L.mouthY + 4 + Math.sin(i / 20 * PI * 3) * 3.5);
+    pen(5);
+    fx.stroke();
+  },
+  chew: (f) => (f ? ellipse(128, L.mouthY + 5, 9, 7, EYE) : arcLine(128, L.mouthY - 4, 9, PI * 0.2, PI * 0.8, 6)),
+  breathe: (f) => ellipse(128, L.mouthY + 4, f ? 5 : 3.5, f ? 6 : 4, EYE)
+};
+
+// expression -> how to draw it; `f` is a 0/1 animation frame
+const FACES = {
+  neutral: (g, blink) => { blink ? closedEyes() : openEyes(g); MOUTHS.smile(); blush(0.35); },
+  happy: (g, blink) => { blink ? closedEyes() : openEyes(g); MOUTHS.open(); blush(0.5); },
+  excited: () => { happyEyes(); MOUTHS.open(); blush(0.65); },
+  bliss: () => { happyEyes(); MOUTHS.cat(); blush(0.75); },
+  curious: (g, blink) => { blink ? closedEyes() : openEyes(g); MOUTHS.o(); blush(0.3); },
+  surprised: (g) => { openEyes(g, L.r * 1.15); MOUTHS.big(); blush(0.3); },
+  scared: (g) => {
+    openEyes({ x: g.x + rand(-0.2, 0.2), y: g.y + rand(-0.2, 0.2) }, L.r * 0.85);
+    MOUTHS.wavy();
+    drop(214, 70, 9);
+  },
+  grumpy: (g) => { lidEyes(g, 0.28, 0.6, true); MOUTHS.frown(); blush(0.2); },
+  sad: (g, blink) => { blink ? closedEyes() : openEyes({ x: g.x, y: 0.8 }); sadBrows(g); MOUTHS.frown(); drop(128 - L.eyeDX + 8, 150, 7); },
+  sleepy: (g, blink) => { blink ? closedEyes() : lidEyes({ x: g.x, y: 0.3 }, 0.5); MOUTHS.small(); blush(0.3); },
+  yawn: () => { closedEyes(); MOUTHS.big(); blush(0.3); },
+  asleep: (g, blink, f) => { closedEyes(); MOUTHS.breathe(f); blush(0.4); },
+  dizzy: () => { spiralEyes(); MOUTHS.wavy(); },
+  munch: (g, blink, f) => { happyEyes(); MOUTHS.chew(f); blush(0.6); },
+  tickled: () => { squeezedEyes(); MOUTHS.open(); blush(0.85); }
+};
+
+let faceKey = "";
+function drawFace(expr, gaze, blink, f) {
+  const key = [expr, Math.round(gaze.x * 8), Math.round(gaze.y * 8), blink ? 1 : 0, f].join();
+  if (key === faceKey) return;
+  faceKey = key;
+  fx.clearRect(0, 0, 256, 256);
+  FACES[expr](gaze, blink, f);
+  faceTex.needsUpdate = true;
+}
+
+/* ==========================================================================
+   Sound: tiny synthesised boings and squelches (Web Audio)
+   ========================================================================== */
+const sfx = (() => {
+  let ctx = null, on = true, noise = null;
+  function ensure() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!ctx && AC) {
+      ctx = new AC();
+      noise = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx && ctx.state === "suspended") ctx.resume();
+  }
+  function tone(f0, f1, dur, type = "sine", vol = 0.12, delay = 0) {
+    if (!on || !ctx) return;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(t);
+    o.stop(t + dur + 0.03);
+  }
+  function squelch(vol) {
+    if (!on || !ctx) return;
+    const t = ctx.currentTime;
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise;
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(900, t);
+    f.frequency.exponentialRampToValueAtTime(180, t + 0.12);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    s.connect(f).connect(g).connect(ctx.destination);
+    s.start(t);
+    s.stop(t + 0.16);
+  }
+  return {
+    ensure,
+    get on() { return on; },
+    set on(v) { on = v; },
+    hop: (p = 1) => tone(240 * p, 470 * p, 0.14, "sine", 0.1),
+    land: (impact) => { const v = clamp(impact * 0.028, 0.03, 0.3); squelch(v); tone(170, 85, 0.13, "sine", v); },
+    poke: () => tone(620, 980, 0.09, "triangle", 0.1),
+    giggle: () => { tone(700, 900, 0.07, "triangle", 0.07); tone(760, 1000, 0.07, "triangle", 0.07, 0.09); },
+    eat: () => { tone(420, 290, 0.08, "square", 0.04); tone(460, 320, 0.08, "square", 0.04, 0.14); },
+    drop: () => tone(900, 1500, 0.09, "triangle", 0.07),
+    grr: () => tone(150, 118, 0.28, "sawtooth", 0.035),
+    yawn: () => tone(430, 190, 0.7, "sine", 0.05),
+    wake: () => tone(380, 760, 0.18, "triangle", 0.08),
+    whee: () => tone(420, 1100, 0.3, "sine", 0.06),
+    bonk: (v) => tone(560, 330, 0.08, "triangle", clamp(v * 0.012, 0.02, 0.08)),
+    splat: () => { squelch(0.4); tone(320, 70, 0.4, "sine", 0.2); },
+    blorp: () => { tone(200, 560, 0.2, "sine", 0.12); squelch(0.08); }
+  };
+})();
+
+/* ==========================================================================
+   State: the body (physics + jelly springs) and the brain
+   ========================================================================== */
+const S = {
+  pos: new V3(0, 4.5, 0.3), vel: new V3(), grounded: false,
+  yaw: 0, yawTarget: 0,
+  q: 0, qv: 0, lx: 0, lxv: 0, lz: 0, lzv: 0, // squash and lean springs
+  crouch: 0, pendingHop: null, cooldown: 1.2, wander: null,
+  held: false, heldTime: 0, grabOffset: new V3(), lastVx: 0,
+  blinkT: 2, blink: 0, surprise: 0, petting: 0, petAcc: 0, eating: 0, yawn: 0, shake: 0, wave: 0,
+  scale: 1, scaleT: 1, split: null,
+  tickling: 0, tickleAcc: 0, tickleTime: 0, tickleRest: 0, tapChain: 0, lastPokeAt: -9, fetch: null,
+  gaze: { x: 0, y: 0 }, look: new V3(), lookTimer: 0
+};
+
+const B = {
+  energy: 0.85, fullness: 0.6, company: 0.5, fun: 0.5, bond: 0.1,
+  joy: 0.45, curiosity: 0.2, annoyance: 0, fear: 0, dizzy: 0, drowsy: 0,
+  asleep: false, sleptAt: 0, lastAttention: 0, pokeHeat: 0,
+  mood: "", expr: "neutral", doing: "Dropping in"
+};
+
+const G = 22; // gravity
+
+/* ---------- Memory: it remembers you between visits ---------- */
+const MEMORY_KEY = "slime-buddy-memory";
+const memory = (() => {
+  try { return JSON.parse(localStorage.getItem(MEMORY_KEY)); } catch (e) { return null; }
+})();
+const awayHours = memory ? Math.max(0, (Date.now() - memory.lastSeen) / 3.6e6) : 0;
+const visits = (memory ? memory.visits : 0) + 1;
+const firstSeen = memory ? memory.firstSeen : Date.now();
+// Time away changes how it feels: well rested, but hungrier and lonelier the longer you were gone
+if (memory) {
+  B.bond = clamp(memory.bond ?? 0.1);
+  B.fullness = clamp((memory.fullness ?? 0.6) - awayHours * 0.04, 0.1, 1);
+  B.energy = awayHours > 0.5 ? 1 : clamp(memory.energy ?? 0.85, 0.3, 1);
+  B.company = awayHours < 1 ? clamp(memory.company ?? 0.5) : clamp(0.5 - awayHours * 0.02, 0.1, 0.5);
+  B.fun = awayHours < 1 ? clamp(memory.fun ?? 0.5) : clamp(0.45 - awayHours * 0.02, 0.1, 0.45);
+}
+function remember() {
+  try {
+    localStorage.setItem(MEMORY_KEY, JSON.stringify({
+      visits, firstSeen, lastSeen: Date.now(), bond: B.bond,
+      energy: B.energy, fullness: B.fullness, company: B.company, fun: B.fun
+    }));
+  } catch (e) {}
+}
+window.addEventListener("pagehide", remember);
+document.addEventListener("visibilitychange", () => { if (document.hidden) remember(); });
+function bond(amount) { B.bond = clamp(B.bond + amount); }
+
+// Its first words depend on how long you were away, and how close you two are
+function greet() {
+  S.wave = 2.2;
+  const h = awayHours;
+  if (!memory) {
+    say("Hi there! I'm Slime Buddy!", true);
+    emote("♪");
+  } else if (h < 0.05) {
+    say(pick(["Oh, you're back already!", "Back so soon?"]), true);
+    emote("♪");
+  } else if (h < 20) {
+    say(pick(["You're back!", "Hi again!", "Yay, it's you!"]), true);
+    B.joy = clamp(B.joy + 0.2);
+    emote("♪");
+  } else if (B.bond > 0.5) {
+    say(h < 72 ? "I missed you!" : "You came back! I missed you so much!", true);
+    B.joy = 1;
+    emote("♥", "heart");
+    setTimeout(() => emote("♥", "heart"), 400);
+  } else {
+    say(h < 72 ? "Where were you?!" : "Hmph. Remember me?", true);
+    B.annoyance = h < 72 ? 0.4 : 0.6;
+    S.shake = 0.5;
+    S.wave = 0;
+  }
+}
+let now = 0;
+
+/* ---------- Speech and emotes ---------- */
+const bubble = document.getElementById("bubble");
+let bubbleUntil = 0, lastSay = -99;
+function say(text, force) {
+  if (!force && now - lastSay < 3.2) return;
+  lastSay = now;
+  bubble.textContent = text;
+  bubble.classList.add("show");
+  bubbleUntil = now + 2.2;
+}
+
+function toScreen(v) {
+  const p = tmp.copy(v).project(camera);
+  return { x: (p.x + 1) / 2 * window.innerWidth, y: (1 - p.y) / 2 * window.innerHeight };
+}
+function headPoint() { return new V3(S.pos.x, S.pos.y + SIZE * (1 + S.q) * S.scale + 0.25, S.pos.z); }
+
+function emote(char, cls = "") {
+  const at = toScreen(headPoint());
+  const el = document.createElement("span");
+  el.className = "fx " + cls;
+  el.textContent = char;
+  el.style.left = at.x + rand(-26, 26) + "px";
+  el.style.top = at.y + "px";
+  el.style.setProperty("--dx", rand(-24, 24) + "px");
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+/* ---------- Splat droplets on big landings ---------- */
+const drops = [];
+const dropGeo = new THREE.IcosahedronGeometry(0.075, 1);
+const dropMat = new THREE.MeshPhysicalMaterial({ color: 0xb596ea, roughness: 0.2, clearcoat: 1, transparent: true, opacity: 0.85 });
+function splat(n) {
+  for (let i = 0; i < n; i++) {
+    let d = drops.find((x) => !x.live);
+    if (!d) { d = { mesh: new THREE.Mesh(dropGeo, dropMat), vel: new V3() }; scene.add(d.mesh); drops.push(d); }
+    const a = Math.random() * Math.PI * 2, s = rand(2, 4.5);
+    d.live = true; d.t = 0;
+    d.mesh.visible = true;
+    d.mesh.position.set(S.pos.x + Math.cos(a) * 0.5, 0.15, S.pos.z + Math.sin(a) * 0.5);
+    d.vel.set(Math.cos(a) * s, rand(3, 6), Math.sin(a) * s);
+  }
+}
+function updateDrops(dt) {
+  drops.forEach((d) => {
+    if (!d.live) return;
+    d.t += dt;
+    d.vel.y -= G * dt;
+    d.mesh.position.addScaledVector(d.vel, dt);
+    if (d.mesh.position.y < 0.06) { d.mesh.position.y = 0.06; d.vel.set(d.vel.x * 0.5, 0, d.vel.z * 0.5); }
+    d.mesh.scale.setScalar(clamp(1 - d.t / 0.9, 0.001));
+    if (d.t > 0.9) { d.live = false; d.mesh.visible = false; }
+  });
+}
+
+/* ---------- Snacks ---------- */
+const snacks = [];
+// Snacks are little star candies
+const starShape = new THREE.Shape();
+for (let i = 0; i < 10; i++) {
+  const r = i % 2 ? 0.085 : 0.2, a = i / 10 * Math.PI * 2 + Math.PI / 2;
+  i ? starShape.lineTo(Math.cos(a) * r, Math.sin(a) * r) : starShape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+}
+const snackGeo = new THREE.ExtrudeGeometry(starShape, {
+  depth: 0.07, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.03, bevelSegments: 3
+}).center();
+const snackMat = new THREE.MeshPhysicalMaterial({ color: 0xffe27a, emissive: 0xffb347, emissiveIntensity: 0.25, roughness: 0.3, clearcoat: 1 });
+function dropSnack(x, z) {
+  if (snacks.length >= 3) removeSnack(snacks.find((s) => s.state !== "eaten") || snacks[0]);
+  const mesh = new THREE.Mesh(snackGeo, snackMat);
+  const s = { mesh, pos: new V3(clamp(x, -ARENA.xMax, ARENA.xMax), 4, clamp(z, ARENA.zMin, ARENA.zMax)), vy: 0, state: "falling", t: 0, shadow: makeShadow(0.5) };
+  mesh.position.copy(s.pos);
+  scene.add(mesh);
+  snacks.push(s);
+  sfx.drop();
+  attend(0.5);
+  if (!B.asleep && B.fullness < 0.92) {
+    B.curiosity = clamp(B.curiosity + 0.6);
+    S.surprise = 0.5;
+    emote("!");
+    say(pick(["Snack!", "Is that for me?", "Ooh, food!"]));
+  } else if (!B.asleep) {
+    say(pick(["So full...", "Maybe later"]));
+  }
+}
+function removeSnack(s) {
+  if (!s) return;
+  scene.remove(s.mesh, s.shadow);
+  snacks.splice(snacks.indexOf(s), 1);
+}
+function nearestSnack() {
+  let best = null, bd = Infinity;
+  snacks.forEach((s) => {
+    if (s.state === "eaten") return;
+    const d = Math.hypot(s.pos.x - S.pos.x, s.pos.z - S.pos.z);
+    if (d < bd) { bd = d; best = s; }
+  });
+  return best && { snack: best, dist: bd };
+}
+function eat(s) {
+  s.state = "eaten"; s.t = 0;
+  S.eating = 1.3;
+  B.fullness = clamp(B.fullness + 0.3);
+  B.joy = clamp(B.joy + 0.25);
+  B.energy = clamp(B.energy + 0.06);
+  B.curiosity = 0;
+  bond(0.015);
+  sfx.eat();
+  setTimeout(() => sfx.eat(), 420);
+  emote("♥", "heart");
+  say(pick(["Nom nom", "Delicious!", "Mmm, crunchy"]), true);
+}
+function updateSnacks(dt) {
+  snacks.slice().forEach((s) => {
+    s.t += dt;
+    if (s.state === "falling") {
+      s.vy -= G * dt;
+      s.pos.y += s.vy * dt;
+      if (s.pos.y <= 0.24) {
+        s.pos.y = 0.24;
+        if (s.vy < -3) s.vy *= -0.35; else { s.vy = 0; s.state = "resting"; }
+      }
+      s.mesh.position.copy(s.pos);
+    } else if (s.state === "resting") {
+      s.mesh.position.set(s.pos.x, 0.27 + Math.sin(s.t * 3) * 0.04, s.pos.z);
+      s.mesh.rotation.y += dt * 1.2;
+    } else {
+      // Being digested: it floats inside the jelly and dissolves
+      const k = clamp(s.t / 1.3);
+      const local = new V3(0, SIZE * 0.5 * (1 + S.q), 0.3).multiplyScalar(S.scale).applyAxisAngle(new V3(0, 1, 0), S.yaw);
+      s.mesh.position.copy(S.pos).add(local);
+      s.mesh.rotation.y += dt * 4;
+      s.mesh.scale.setScalar(Math.max(0.001, 0.8 * (1 - k)));
+      if (k >= 1) removeSnack(s);
+    }
+    s.shadow.visible = s.state !== "eaten";
+    s.shadow.position.set(s.pos.x, 0.006, s.pos.z);
+  });
+}
+
+/* ---------- Fetch: a beach ball to throw ---------- */
+const BALL_R = 0.24;
+const ballTex = canvasTexture(128, (g, n) => {
+  ["#ffffff", "#f0a0b4", "#ffffff", "#9d9cf0", "#ffffff", "#ffd97a"].forEach((c, i) => {
+    g.fillStyle = c;
+    g.fillRect(i * n / 6, 0, n / 6 + 1, n);
+  });
+});
+const ball = {
+  mesh: new THREE.Mesh(new THREE.SphereGeometry(BALL_R, 32, 20), new THREE.MeshPhysicalMaterial({ map: ballTex, roughness: 0.35, clearcoat: 1 })),
+  shadow: makeShadow(0.7), pos: new V3(), vel: new V3(), grabOffset: new V3(), swing: new V3(),
+  active: false, held: false, carried: false, fresh: false, swingAt: -9, fakedAt: -9
+};
+ball.mesh.visible = ball.shadow.visible = false;
+scene.add(ball.mesh);
+const ballPlane = new THREE.Plane();
+
+function spawnBall() {
+  Object.assign(ball, { active: true, held: false, carried: false, fresh: false });
+  if (S.fetch) S.fetch = null;
+  ball.pos.set(clamp(S.pos.x + (S.pos.x > 0 ? -1.6 : 1.6), -ARENA.xMax, ARENA.xMax), 3.5, clamp(S.pos.z + 0.8, ARENA.zMin, ARENA.zMax));
+  ball.vel.set(0, 0, 0);
+  ball.mesh.visible = ball.shadow.visible = true;
+  sfx.drop();
+  if (!B.asleep) {
+    B.curiosity = clamp(B.curiosity + 0.5);
+    emote("!");
+    say(pick(["A ball!", "Ooh, play time?"]));
+  }
+}
+function hitBall() {
+  if (!ball.active || ball.carried) return null;
+  raycaster.setFromCamera(ptr.ndc, camera);
+  const hit = raycaster.intersectObject(ball.mesh, false)[0];
+  return hit ? hit.point : null;
+}
+function grabBall(point) {
+  ball.held = true;
+  ball.fresh = false;
+  ball.grabOffset.copy(point).sub(ball.pos);
+  camera.getWorldDirection(tmp).negate();
+  ballPlane.setFromNormalAndCoplanarPoint(tmp, point);
+  canvas.className = "grabbing";
+  attend(0.5);
+  if (!B.asleep && S.fetch?.phase !== "carry") say(pick(["Throw it!", "Ooh, ooh!", "Me! Me!"]));
+}
+function throwBall() {
+  ball.held = false;
+  canvas.className = "";
+  const speed = ball.vel.length();
+  if (speed > 18) ball.vel.multiplyScalar(18 / speed);
+  if (speed > 3) ball.fresh = true; // a real throw: worth chasing
+}
+// A big swing that stops without letting go. It falls for it, then notices
+function fakeThrow(dir) {
+  if (B.asleep || S.held || S.fetch?.phase === "carry" || now - ball.fakedAt < 2) return;
+  ball.fakedAt = now;
+  B.curiosity = clamp(B.curiosity + 0.3);
+  emote("!");
+  hop(S.pos.x + dir.x * 0.25, S.pos.z + dir.z * 0.25, 1);
+  setTimeout(() => {
+    if (!ball.held) return;
+    B.annoyance = clamp(B.annoyance + 0.25);
+    B.joy = clamp(B.joy - 0.1);
+    S.shake = 0.5;
+    sfx.grr();
+    say(pick(["Hey! You didn't throw it!", "Not funny!", "Cheater!"]), true);
+  }, 900);
+}
+function updateBall(dt) {
+  if (!ball.active) return;
+  if (ball.carried) {
+    // Held up over its head in both arms
+    ball.pos.set(S.pos.x, S.pos.y + SIZE * (1 + S.q) * S.scale + BALL_R * 0.7, S.pos.z);
+    ball.vel.set(0, 0, 0);
+  } else if (ball.held) {
+    raycaster.setFromCamera(ptr.ndc, camera);
+    if (raycaster.ray.intersectPlane(ballPlane, tmp)) {
+      tmp.sub(ball.grabOffset);
+      tmp.y = Math.max(BALL_R, tmp.y);
+      const k = 160, c = 16;
+      ball.vel.x += ((tmp.x - ball.pos.x) * k - ball.vel.x * c) * dt;
+      ball.vel.y += ((tmp.y - ball.pos.y) * k - ball.vel.y * c) * dt;
+      ball.vel.z += ((tmp.z - ball.pos.z) * k - ball.vel.z * c) * dt;
+    }
+    ball.pos.addScaledVector(ball.vel, dt);
+    const speed = ball.vel.length();
+    if (speed > 8) { ball.swing.copy(ball.vel); ball.swingAt = now; }
+    else if (speed < 2 && now - ball.swingAt < 0.8) { ball.swingAt = -9; fakeThrow(ball.swing); }
+  } else {
+    ball.vel.y -= G * dt;
+    ball.pos.addScaledVector(ball.vel, dt);
+    if (ball.pos.y < BALL_R) {
+      ball.pos.y = BALL_R;
+      if (ball.vel.y < -1.5) { sfx.bonk(-ball.vel.y); ball.vel.y *= -0.62; } else ball.vel.y = 0;
+    }
+    if (ball.pos.y <= BALL_R + 0.01) {
+      const f = 1 - Math.min(1, 1.2 * dt); // rolling friction
+      ball.vel.x *= f;
+      ball.vel.z *= f;
+    }
+  }
+  if (!ball.carried) {
+    if (Math.abs(ball.pos.x) > ARENA.xMax + 0.5) { ball.pos.x = clamp(ball.pos.x, -ARENA.xMax - 0.5, ARENA.xMax + 0.5); ball.vel.x *= -0.7; }
+    if (ball.pos.z < ARENA.zMin || ball.pos.z > ARENA.zMax + 0.5) { ball.pos.z = clamp(ball.pos.z, ARENA.zMin, ARENA.zMax + 0.5); ball.vel.z *= -0.7; }
+    // Bounce off the slime
+    const dx = ball.pos.x - S.pos.x, dz = ball.pos.z - S.pos.z, d = Math.hypot(dx, dz) || 0.001, min = 0.62 * S.scale + BALL_R;
+    if (!ball.held && d < min && ball.pos.y < SIZE * S.scale + BALL_R * 0.5 + S.pos.y) {
+      const nx = dx / d, nz = dz / d;
+      ball.pos.x = S.pos.x + nx * min;
+      ball.pos.z = S.pos.z + nz * min;
+      const vn = (ball.vel.x - S.vel.x) * nx + (ball.vel.z - S.vel.z) * nz;
+      if (vn < 0) { ball.vel.x -= 1.6 * vn * nx; ball.vel.z -= 1.6 * vn * nz; S.qv -= 0.5; }
+    }
+    const hs = Math.hypot(ball.vel.x, ball.vel.z);
+    if (hs > 0.01 && ball.pos.y <= BALL_R + 0.01) ball.mesh.rotateOnWorldAxis(tmp.set(ball.vel.z, 0, -ball.vel.x).normalize(), hs * dt / BALL_R);
+  }
+  ball.mesh.position.copy(ball.pos);
+  ball.shadow.position.set(ball.pos.x, 0.006, ball.pos.z);
+  ball.shadow.scale.setScalar(1 - clamp(ball.pos.y / 6) * 0.5);
+}
+
+/* ==========================================================================
+   Pointer: lead, drag, poke, pet, feed
+   ========================================================================== */
+const ptr = {
+  ndc: new THREE.Vector2(), sx: 0, sy: 0, ground: new V3(), lastMove: -99, inside: false,
+  down: false, downAt: 0, downX: 0, downY: 0, moved: 0, onSlime: false, grabPoint: new V3(), type: "mouse",
+  wasActive: false, onBall: false, lastTs: 0
+};
+const dragPlane = new THREE.Plane();
+
+function readPointer(e) {
+  ptr.sx = e.clientX; ptr.sy = e.clientY;
+  ptr.ndc.set(e.clientX / window.innerWidth * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+  ptr.type = e.pointerType || "mouse";
+  raycaster.setFromCamera(ptr.ndc, camera);
+  if (raycaster.ray.intersectPlane(groundPlane, tmp)) {
+    ptr.ground.set(clamp(tmp.x, -ARENA.xMax, ARENA.xMax), 0, clamp(tmp.z, ARENA.zMin, ARENA.zMax));
+  }
+}
+function hitSlime() {
+  raycaster.setFromCamera(ptr.ndc, camera);
+  const hit = raycaster.intersectObjects([jelly, ...arms.map((a) => a.mesh)], false)[0];
+  return hit ? hit.point : null;
+}
+// Leading: a hovering mouse, or a finger pressed on the ground
+function pointerActive() {
+  if (S.held || ball.held) return false;
+  if (ptr.type === "mouse") return ptr.inside && now - ptr.lastMove < 4;
+  return (ptr.down && !ptr.onSlime) || now - ptr.lastMove < 1.2;
+}
+
+function startDrag() {
+  S.held = true; S.heldTime = 0; S.grounded = false;
+  S.crouch = 0; S.pendingHop = null; S.lastVx = 0;
+  S.grabOffset.copy(ptr.grabPoint).sub(S.pos);
+  camera.getWorldDirection(tmp).negate();
+  dragPlane.setFromNormalAndCoplanarPoint(tmp, ptr.grabPoint);
+  attend(1);
+  B.curiosity = 0;
+  sfx.poke();
+  canvas.className = "grabbing";
+}
+function endDrag() {
+  S.held = false;
+  canvas.className = "";
+  const speed = S.vel.length();
+  if (speed > 16) S.vel.multiplyScalar(16 / speed);
+  if (speed > 8) {
+    B.fear = clamp(B.fear + 0.25);
+    bond(-0.005);
+    say(pick(["Aaaah!", "Wheeee!"]), true);
+    sfx.whee();
+  }
+}
+function poke() {
+  attend(1);
+  // A quick flurry of taps is a tickle, not a poke
+  S.tapChain = now - S.lastPokeAt < 0.4 ? S.tapChain + 1 : 1;
+  S.lastPokeAt = now;
+  if (S.tapChain >= 3 && S.tickleRest <= 0) {
+    if (B.asleep) wakeUp(false);
+    S.tickling = 0.7;
+    B.pokeHeat = Math.max(0, B.pokeHeat - 2);
+    return;
+  }
+  if (B.asleep) { wakeUp(true); return; }
+  B.pokeHeat += 1;
+  S.qv -= 4.5;
+  S.surprise = 0.3;
+  if (S.grounded && S.crouch <= 0) { S.vel.set(0, 3.2, 0); S.grounded = false; }
+  if (B.pokeHeat > 3.5) {
+    B.annoyance = clamp(B.annoyance + 0.35);
+    B.joy = clamp(B.joy - 0.1);
+    bond(-0.01);
+    S.shake = 0.6;
+    sfx.grr();
+    emote("!!");
+    say(pick(["Hey! Quit it!", "Grrr...", "Rude!"]), B.annoyance > 0.5);
+  } else {
+    B.joy = clamp(B.joy + 0.12);
+    sfx.giggle();
+    emote("♪");
+    say(pick(["Hehe!", "That tickles!", "Boop!"]));
+  }
+}
+
+canvas.addEventListener("pointerdown", (e) => {
+  sfx.ensure();
+  readPointer(e);
+  canvas.setPointerCapture(e.pointerId);
+  ptr.down = true; ptr.downAt = now; ptr.downX = e.clientX; ptr.downY = e.clientY; ptr.moved = 0;
+  ptr.lastMove = now; ptr.inside = true;
+  const ballHit = hitBall();
+  ptr.onBall = !!ballHit;
+  if (ballHit) { ptr.onSlime = false; ptr.mini = null; grabBall(ballHit); return; }
+  const hit = hitSlime();
+  ptr.onSlime = !!hit;
+  if (hit) ptr.grabPoint.copy(hit);
+  ptr.mini = hit ? null : hitMini();
+});
+window.addEventListener("pointermove", (e) => {
+  const px = ptr.sx, py = ptr.sy;
+  readPointer(e);
+  ptr.lastMove = now; ptr.inside = true;
+  if (ptr.down) ptr.moved = Math.max(ptr.moved, Math.hypot(e.clientX - ptr.downX, e.clientY - ptr.downY));
+  if (ptr.down && ptr.onSlime && !S.held && ptr.moved > 8) startDrag();
+  if (!ptr.down && ptr.type === "mouse") {
+    const over = !!hitSlime();
+    canvas.className = over || hitBall() ? "grab" : "";
+    if (over) {
+      // Slow strokes pet; fast wiggles tickle
+      const d = Math.hypot(e.clientX - px, e.clientY - py);
+      const speed = d / Math.max(0.008, (e.timeStamp - ptr.lastTs) / 1000);
+      if (speed > 900) S.tickleAcc += d; else S.petAcc += d;
+    }
+  }
+  ptr.lastTs = e.timeStamp;
+});
+function release(e) {
+  if (!ptr.down) return;
+  ptr.down = false;
+  const quick = now - ptr.downAt < 0.4 && ptr.moved < 8;
+  if (ptr.onBall) {
+    ptr.onBall = false;
+    if (quick) ball.vel.set(rand(-1, 1), 4.5, rand(-1, 1)); // a tap bops it up
+    throwBall();
+    return;
+  }
+  if (S.held) endDrag();
+  else if (quick && ptr.onSlime) poke();
+  else if (quick && ptr.mini) pokeMini(ptr.mini);
+  else if (quick && e.type === "pointerup") dropSnack(ptr.ground.x, ptr.ground.z);
+  ptr.onSlime = false;
+}
+window.addEventListener("pointerup", release);
+window.addEventListener("pointercancel", release);
+document.documentElement.addEventListener("pointerleave", () => { ptr.inside = false; });
+
+// Pointer marker on the ground while leading
+const marker = new THREE.Mesh(
+  new THREE.RingGeometry(0.22, 0.3, 32).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0x7537b0, transparent: true, opacity: 0, depthWrite: false })
+);
+marker.position.y = 0.01;
+scene.add(marker);
+
+/* ==========================================================================
+   Brain
+   ========================================================================== */
+function attend(amount) {
+  B.lastAttention = now;
+  B.company = clamp(B.company + 0.05 * amount);
+  B.drowsy = clamp(B.drowsy - 0.5 * amount);
+}
+function fallAsleep() {
+  B.asleep = true; B.sleptAt = now; B.drowsy = 1;
+  ball.carried = false;
+  S.fetch = null;
+  S.wander = null;
+  say("Zzz...", true);
+}
+function wakeUp(rudely) {
+  B.asleep = false; B.drowsy = 0.15;
+  S.qv += 3; S.surprise = 0.5;
+  sfx.wake();
+  emote("!");
+  if (rudely && B.energy < 0.6) {
+    B.annoyance = clamp(B.annoyance + 0.45);
+    bond(-0.02);
+    say(pick(["Five more minutes...", "I was sleeping!"]), true);
+  } else {
+    say(pick(["Huh? I'm up!", "What did I miss?"]), true);
+    S.wave = 1.4;
+  }
+}
+
+// Picks a point up to `step` away from the slime, towards (tx, tz)
+function hop(tx, tz, power = 1) {
+  if (!S.grounded || S.crouch > 0 || S.held || S.eating > 0) return;
+  const dx = tx - S.pos.x, dz = tz - S.pos.z, d = Math.hypot(dx, dz);
+  const step = Math.min(d, 1.9 * power);
+  S.pendingHop = { dx: d ? dx / d * step : 0, dz: d ? dz / d * step : 0, power };
+  S.crouch = 0.16;
+  if (d > 0.05) S.yawTarget = faceable(Math.atan2(dx, dz), 0.9);
+  B.energy = clamp(B.energy - 0.008 * power);
+}
+// Keep the face mostly towards the viewer
+function faceable(yaw, limit, pos = S.pos) {
+  const camYaw = Math.atan2(camera.position.x - pos.x, camera.position.z - pos.z);
+  return camYaw + clamp(wrapAngle(yaw - camYaw), -limit, limit);
+}
+
+const MOODS = {
+  asleep: "Asleep", scared: "Scared", dizzy: "Dizzy", surprised: "Surprised", excited: "Excited",
+  munch: "Munching", yawn: "Sleepy", sleepy: "Sleepy", grumpy: "Grumpy", bliss: "Blissful",
+  curious: "Curious", happy: "Happy", neutral: "Calm", tickled: "Tickled"
+};
+const LINES = {
+  Excited: ["Wheee!", "Higher!"], Scared: ["Put me down!", "Too high!"],
+  Dizzy: ["Everything's spinning...", "Woozy..."], Grumpy: ["Hmph.", "Leave me alone!"],
+  Blissful: ["Mmm, nice...", "More, please", "Aww"], Sleepy: ["*yawn*", "So sleepy...", "Just resting my eyes"],
+  Hungry: ["I'm hungry...", "Got a snack?"], Lonely: ["Hello? Anyone?", "Play with me?"],
+  Bored: ["I'm bored...", "Wanna play?"],
+  Curious: ["Hmm?", "What's that?"], Happy: ["Hehe!", "Yay!", "La la la"]
+};
+const EMOTES = { Curious: ["?"], Happy: ["♪"], Blissful: ["♥", "heart"], Scared: ["!"], Grumpy: ["!!"], Dizzy: ["✦"] };
+
+function chooseExpression() {
+  if (B.asleep) return "asleep";
+  if (S.held) return B.fear > 0.5 ? "scared" : B.dizzy > 0.5 ? "dizzy" : S.heldTime < 0.45 ? "surprised" : "excited";
+  if (S.tickling > 0) return "tickled";
+  if (B.dizzy > 0.45) return "dizzy";
+  if (S.eating > 0) return "munch";
+  if (S.yawn > 0) return "yawn";
+  if (B.fear > 0.5) return "scared";
+  if (B.annoyance > 0.55) return "grumpy";
+  if (S.petting > 0) return "bliss";
+  if (S.surprise > 0) return "surprised";
+  if (B.drowsy > 0.45) return "sleepy";
+  if (S.fetch) return "happy";
+  if (B.fullness < 0.2 || B.company < 0.2 || B.fun < 0.12) return "sad";
+  if (B.curiosity > 0.5) return "curious";
+  if (B.joy > 0.62) return !S.grounded && B.joy > 0.75 ? "excited" : "happy";
+  return "neutral";
+}
+
+function think(dt) {
+  const idle = now - B.lastAttention;
+  const active = pointerActive();
+
+  // Needs drift
+  B.energy = clamp(B.energy + (B.asleep ? 0.05 : -0.0035) * dt);
+  B.fullness = clamp(B.fullness - 0.005 * dt);
+  B.company = clamp(B.company + (idle > 6 ? -0.012 : 0.03) * dt);
+  B.fun = clamp(B.fun - 0.004 * dt);
+
+  // Feelings settle back towards a baseline set by the needs
+  const base = 0.2 + 0.4 * B.company * (0.4 + 0.6 * B.fullness);
+  B.joy += (base - B.joy) * 0.1 * dt;
+  B.curiosity = Math.max(0, B.curiosity - 0.12 * dt);
+  B.annoyance = Math.max(0, B.annoyance - 0.06 * dt);
+  B.fear = Math.max(0, B.fear - (S.held ? 0.05 : 0.35) * dt);
+  if (!S.held) B.dizzy = Math.max(0, B.dizzy - 0.15 * dt);
+  B.pokeHeat = Math.max(0, B.pokeHeat - 0.6 * dt);
+
+  // Your cursor coming back is interesting; moving it around is company
+  if (active && !ptr.wasActive && !B.asleep && idle > 5) {
+    B.curiosity = clamp(B.curiosity + 0.4);
+    say(pick(["Oh! There you are!", "Ooh, a pointer!", "Hi!"]));
+    S.wave = 1.6;
+  }
+  ptr.wasActive = active;
+  if (active) {
+    const near = Math.hypot(ptr.ground.x - S.pos.x, ptr.ground.z - S.pos.z) < 1.8;
+    if (!B.asleep || near) attend(dt * 0.6);
+    if (B.asleep && near && ptr.type !== "mouse") wakeUp(false);
+  }
+
+  // Petting: stroking with the mouse, or resting a finger on it
+  S.petAcc *= Math.exp(-3 * dt);
+  const cuddle = ptr.down && ptr.onSlime && !S.held && ptr.moved < 8 && now - ptr.downAt > 0.45;
+  if (S.petAcc > 90 || cuddle) {
+    if (S.petting <= 0 && !B.asleep) say(pick(LINES.Blissful));
+    S.petting = 0.5;
+  }
+  if (S.petting > 0) {
+    S.petting -= dt;
+    B.lastAttention = now;
+    B.joy = clamp(B.joy + 0.25 * dt);
+    B.company = clamp(B.company + 0.15 * dt);
+    B.annoyance = Math.max(0, B.annoyance - 0.3 * dt);
+    B.fear = Math.max(0, B.fear - 0.5 * dt);
+    if (!B.asleep) B.drowsy = Math.max(0, B.drowsy - 0.3 * dt);
+    B.fun = clamp(B.fun + 0.04 * dt);
+    bond(0.006 * dt);
+    if (Math.random() < dt * 1.6) emote("♥", "heart");
+  }
+
+  // Tickling: fast wiggles, or a flurry of taps. Great fun, up to a point
+  S.tickleAcc *= Math.exp(-4 * dt);
+  S.tickleRest -= dt;
+  if (S.tickleAcc > 260 && S.tickleRest <= 0) {
+    if (B.asleep) { wakeUp(false); say("Hahaha, okay, I'm up!", true); }
+    S.tickling = Math.max(S.tickling, 0.4);
+  }
+  if (S.tickling > 0) {
+    if (S.tickleTime === 0) say(pick(["Hahaha!", "Hehehe, stop!", "That tickles!"]), true);
+    S.tickling -= dt;
+    S.tickleTime += dt;
+    S.petting = 0;
+    S.petAcc = 0;
+    B.lastAttention = now;
+    B.joy = clamp(B.joy + 0.4 * dt);
+    B.fun = clamp(B.fun + 0.2 * dt);
+    B.company = clamp(B.company + 0.1 * dt);
+    B.annoyance = Math.max(0, B.annoyance - 0.2 * dt);
+    bond(0.005 * dt);
+    if (Math.random() < dt * 3) { sfx.giggle(); emote(pick(["ha", "hehe", "♪"])); }
+    if (S.tickleTime > 3.5) {
+      // Too much of a good thing
+      S.tickling = 0; S.tickleTime = 0; S.tickleAcc = 0; S.tickleRest = 3;
+      B.annoyance = clamp(B.annoyance + 0.3);
+      S.shake = 0.5;
+      say("Stop! Stop! I can't breathe!", true);
+    }
+  } else {
+    S.tickleTime = Math.max(0, S.tickleTime - 0.5 * dt);
+  }
+
+  // Sleepiness creeps in when ignored (or worn out)
+  if (!B.asleep) {
+    const tired = B.energy < 0.25 ? 0.05 : 0;
+    const rate = idle > 9 ? 0.07 + tired : tired ? tired * 0.5 : -0.4;
+    B.drowsy = clamp(B.drowsy + rate * dt);
+    if (B.drowsy >= 1 && S.grounded && !S.held && S.eating <= 0) fallAsleep();
+  } else if (B.energy > 0.98 && now - B.sleptAt > 25) {
+    wakeUp(false);
+    B.lastAttention = now - 4;
+  }
+  if (B.asleep && Math.random() < dt * 0.6) emote("z", "zz");
+
+  // Held: fun near the ground, scary up high, dizzy when shaken
+  if (S.held) {
+    S.heldTime += dt;
+    const speed = S.vel.length();
+    if (S.pos.y > 2.4) B.fear = clamp(B.fear + 0.5 * dt);
+    else if (speed > 2) B.joy = clamp(B.joy + 0.3 * dt);
+    if (Math.sign(S.vel.x) !== Math.sign(S.lastVx) && Math.abs(S.vel.x) > 3) B.dizzy = clamp(B.dizzy + 0.09);
+    S.lastVx = S.vel.x;
+  }
+
+  // Face and mood
+  const expr = chooseExpression();
+  let mood = MOODS[expr] || "Calm";
+  if (expr === "sad") mood = B.fullness < 0.2 ? "Hungry" : B.company < 0.2 ? "Lonely" : "Bored";
+  if (S.fetch && expr === "happy") mood = "Playful";
+  if (mood !== B.mood) {
+    const prev = B.mood;
+    B.mood = mood;
+    document.getElementById("mood").textContent = mood;
+    if (prev && LINES[mood] && Math.random() < 0.7) say(pick(LINES[mood]));
+    if (EMOTES[mood]) emote(...EMOTES[mood]);
+  }
+  B.expr = expr;
+
+  decide(dt, active);
+}
+
+// What to do next, once the slime is on the ground and free
+function decide(dt, active) {
+  if (!S.grounded || S.held || S.crouch > 0 || B.asleep || S.eating > 0) {
+    if (S.held) B.doing = B.fear > 0.5 ? "Hanging on for dear life" : "Being carried";
+    else if (B.asleep) B.doing = "Napping";
+    else if (!S.grounded && S.crouch <= 0 && S.vel.lengthSq() > 64) B.doing = "Flying!";
+    else if (S.eating > 0) B.doing = "Eating a snack";
+    return;
+  }
+  S.cooldown -= dt;
+  if (S.cooldown > 0) return;
+
+  const pep = 0.55 + 0.45 * B.energy;
+  const ptrDist = Math.hypot(ptr.ground.x - S.pos.x, ptr.ground.z - S.pos.z);
+
+  // In pieces: wait for the bits, then go and gather them up
+  if (S.split) {
+    B.doing = S.split.called ? "Pulling itself back together" : "In pieces!";
+    const near = nearestMini();
+    if (S.split.called && near && near.dist > 1.6) hop(near.mini.pos.x, near.mini.pos.z, 0.7);
+    S.cooldown = rand(0.7, 1.2);
+    return;
+  }
+
+  if (B.dizzy > 0.45) {
+    B.doing = "Seeing stars";
+    if (Math.random() < 0.4) hop(S.pos.x + rand(-1, 1), S.pos.z + rand(-1, 1), 0.35);
+    S.cooldown = rand(0.8, 1.6);
+    return;
+  }
+  const food = nearestSnack();
+  if (food && B.fullness < 0.92) {
+    B.doing = "Chasing a snack";
+    if (food.dist < 0.8) eat(food.snack);
+    else hop(food.snack.pos.x, food.snack.pos.z, 1.1 * pep);
+    S.cooldown = 0.12;
+    return;
+  }
+
+  if (fetchStep(pep)) return;
+  if (ball.held) {
+    B.doing = "Watching the ball";
+    S.cooldown = 0.3;
+    return;
+  }
+
+  if (B.annoyance > 0.55 && active && ptrDist < 3) {
+    B.doing = "Sulking away from you";
+    const ax = S.pos.x - ptr.ground.x, az = S.pos.z - ptr.ground.z, l = Math.hypot(ax, az) || 1;
+    hop(clamp(S.pos.x + ax / l * 2, -ARENA.xMax, ARENA.xMax), clamp(S.pos.z + az / l * 2, ARENA.zMin, ARENA.zMax), 0.9);
+    S.cooldown = rand(0.6, 1.2);
+    return;
+  }
+  if (B.drowsy > 0.45) {
+    B.doing = "Trying to stay awake";
+    if (Math.random() < 0.35) { S.yawn = 1.1; sfx.yawn(); }
+    S.cooldown = rand(1.8, 3);
+    return;
+  }
+  if (active) {
+    if (ptrDist > 1.5) {
+      B.doing = "Following you";
+      hop(ptr.ground.x, ptr.ground.z, pep * (ptrDist > 4 ? 1.15 : 1) * (B.joy > 0.7 ? 1.1 : 1));
+      S.cooldown = 0.1 + (1 - B.energy) * 0.5;
+    } else {
+      B.doing = S.petting > 0 ? "Enjoying a pat" : "Watching you";
+      S.cooldown = 0.3;
+    }
+    return;
+  }
+  if (B.company < 0.22) {
+    B.doing = "Looking for you";
+    const fx = 0, fz = ARENA.zMax - 0.8;
+    if (Math.hypot(fx - S.pos.x, fz - S.pos.z) > 1) hop(fx, fz, 0.8);
+    S.cooldown = rand(1.2, 2.2);
+    return;
+  }
+  // Wander between points of interest, with pauses to look around
+  if (!S.wander || Math.hypot(S.wander.x - S.pos.x, S.wander.z - S.pos.z) < 0.6) {
+    if (S.wander) {
+      S.wander = null;
+      B.doing = "Looking around";
+      S.lookTimer = 0;
+      S.cooldown = rand(1.5, 3.5);
+      if (Math.random() < 0.3) B.curiosity = clamp(B.curiosity + 0.3);
+      return;
+    }
+    S.wander = new V3(rand(-ARENA.xMax, ARENA.xMax), 0, rand(ARENA.zMin, ARENA.zMax));
+  }
+  B.doing = B.fullness < 0.2 ? "Looking for food" : "Exploring";
+  hop(S.wander.x, S.wander.z, rand(0.7, 1) * pep);
+  S.cooldown = rand(0.4, 1.4) / pep;
+}
+
+/* ==========================================================================
+   Body: hopping, falling, bouncing, being carried, and jelly wobble
+   ========================================================================== */
+function walls() {
+  const b = ARENA;
+  if (S.pos.x < -b.xMax || S.pos.x > b.xMax) {
+    S.pos.x = clamp(S.pos.x, -b.xMax, b.xMax);
+    if (Math.abs(S.vel.x) > 1) { S.lxv += S.vel.x * 0.35; S.qv -= Math.abs(S.vel.x) * 0.2; sfx.land(Math.abs(S.vel.x) * 0.6); }
+    S.vel.x *= -0.55;
+  }
+  if (S.pos.z < b.zMin || S.pos.z > b.zMax) {
+    S.pos.z = clamp(S.pos.z, b.zMin, b.zMax);
+    if (Math.abs(S.vel.z) > 1) { S.lzv += S.vel.z * 0.35; S.qv -= Math.abs(S.vel.z) * 0.2; sfx.land(Math.abs(S.vel.z) * 0.6); }
+    S.vel.z *= -0.55;
+  }
+}
+
+function physics(dt) {
+  if (S.held) {
+    // Follow the pointer on a plane facing the camera, through a stiff spring
+    raycaster.setFromCamera(ptr.ndc, camera);
+    if (raycaster.ray.intersectPlane(dragPlane, tmp)) {
+      tmp.sub(S.grabOffset);
+      tmp.y = Math.max(0, tmp.y);
+      const k = 110, c = 14;
+      S.vel.x += ((tmp.x - S.pos.x) * k - S.vel.x * c) * dt;
+      S.vel.y += ((tmp.y - S.pos.y) * k - S.vel.y * c) * dt;
+      S.vel.z += ((tmp.z - S.pos.z) * k - S.vel.z * c) * dt;
+    }
+    S.pos.addScaledVector(S.vel, dt);
+    if (S.pos.y < 0) { S.pos.y = 0; S.vel.y = Math.max(0, S.vel.y); }
+    walls();
+    S.yawTarget = faceable(0, 0);
+    return;
+  }
+
+  if (S.crouch > 0) {
+    S.crouch -= dt;
+    if (S.crouch <= 0 && S.pendingHop) {
+      const h = S.pendingHop;
+      const vy = (5.6 + 1.2 * B.joy) * Math.min(h.power, 1.25) + 0.6;
+      const flight = 2 * vy / G;
+      S.vel.set(h.dx / flight, vy, h.dz / flight);
+      S.grounded = false;
+      S.pendingHop = null;
+      S.qv += 3.2;
+      sfx.hop(0.9 + B.joy * 0.25);
+    }
+  }
+
+  if (!S.grounded) {
+    S.vel.y -= G * dt;
+    S.pos.addScaledVector(S.vel, dt);
+    walls();
+    if (S.pos.y <= 0) {
+      S.pos.y = 0;
+      const impact = -S.vel.y;
+      S.qv -= impact * 0.5;
+      sfx.land(impact);
+      if (impact > SPLIT_SPEED && landed && !S.split && S.scale > 0.95) { // not on the drop-in at start
+        split();
+        S.vel.set(S.vel.x * 0.3, 3, S.vel.z * 0.3);
+      } else if (impact > 8) {
+        // Slimes are bouncy
+        S.vel.set(S.vel.x * 0.7, impact * 0.45, S.vel.z * 0.7);
+        splat(Math.min(12, Math.round(impact / 1.5)));
+        B.dizzy = clamp(B.dizzy + (impact - 8) * 0.035);
+        if (impact > 13) B.fear = clamp(B.fear + 0.2);
+      } else {
+        S.vel.set(0, 0, 0);
+        S.grounded = true;
+        if (impact > 3) splat(3);
+      }
+    }
+  }
+}
+
+/* ---------- Fetch ---------- */
+// Where to bring the ball: under your pointer if it's about, otherwise front and centre
+function dropSpot() {
+  const x = pointerActive() ? ptr.ground.x : 0;
+  return new V3(clamp(x, -ARENA.xMax + 0.5, ARENA.xMax - 0.5), 0, ARENA.zMax - 0.4);
+}
+// Chase a thrown ball, carry it back, and beg for another go. Returns true while busy with it
+function fetchStep(pep) {
+  if (!ball.active) { S.fetch = null; return false; }
+  const f = S.fetch;
+  if (ball.fresh && !ball.held && f?.phase !== "carry" && f?.phase !== "chase") {
+    ball.fresh = false;
+    if (B.annoyance > 0.55 || B.energy < 0.12) {
+      say(B.energy < 0.12 ? "Too tired..." : "Get it yourself!", true);
+      return false;
+    }
+    S.fetch = { phase: "chase", since: now };
+    say(pick(["I'll get it!", "Mine!", "Ball!"]));
+  }
+  // Bored, with a ball lying about? Bring it over and suggest a game
+  if (!S.fetch && B.fun < 0.25 && !ball.held && Math.random() < 0.3) {
+    S.fetch = { phase: "chase", since: now, bored: true };
+    say("Play with me?", true);
+  }
+  const F = S.fetch;
+  if (!F) return false;
+  if (F.phase === "chase") {
+    if (ball.held) { S.fetch = null; return false; } // you took it back
+    B.doing = F.bored ? "Fetching the ball for you" : "Chasing the ball";
+    const d = Math.hypot(ball.pos.x - S.pos.x, ball.pos.z - S.pos.z);
+    if (d < 0.75 * S.scale + BALL_R && ball.pos.y < 0.9) {
+      ball.carried = true;
+      ball.fresh = false;
+      S.fetch = { phase: "carry", since: now };
+      sfx.poke();
+      emote("♪");
+    } else if (now - F.since > 15) {
+      S.fetch = null;
+      say("Lost it...", true);
+      return false;
+    } else {
+      hop(ball.pos.x + ball.vel.x * 0.25, ball.pos.z + ball.vel.z * 0.25, 1.15 * pep);
+    }
+    S.cooldown = 0.05;
+    return true;
+  }
+  if (F.phase === "carry") {
+    B.doing = "Bringing the ball back";
+    const spot = dropSpot();
+    if (Math.hypot(spot.x - S.pos.x, spot.z - S.pos.z) > 0.5) {
+      hop(spot.x, spot.z, pep);
+      S.cooldown = 0.05;
+      return true;
+    }
+    // Drop it at your feet
+    ball.carried = false;
+    ball.vel.set(0, 2.5, 1.2);
+    S.fetch = { phase: "wait", since: now };
+    B.joy = clamp(B.joy + 0.15);
+    B.fun = clamp(B.fun + 0.25);
+    bond(0.025);
+    S.wave = 1.2;
+    say(pick(["Again! Again!", "Throw it again!", "Here you go!"]), true);
+    S.cooldown = 0.6;
+    return true;
+  }
+  // Waiting for the next throw
+  B.doing = "Waiting for you to throw";
+  if (now - F.since > 10) {
+    S.fetch = null;
+    say(pick(["Aw, no more?", "Fine, I'll play by myself."]), true);
+    return false;
+  }
+  S.cooldown = 0.4;
+  return true;
+}
+
+/* ---------- Splitting apart and merging back ---------- */
+// A drop from about three body-heights up splits the slime in three
+const SPLIT_SPEED = 11.5;
+const minis = [];
+
+function makeMini(vel) {
+  const group = new THREE.Group();
+  group.matrixAutoUpdate = false;
+  // Share the body's jelly, core, highlights and live face, but not the arms
+  body.children.forEach((c) => { if (!arms.some((a) => a.pivot === c)) group.add(c.clone()); });
+  scene.add(group);
+  return {
+    group, shadow: makeShadow(BODY.w * 1.45), pos: S.pos.clone(), vel,
+    grounded: false, q: 0, qv: 0, lx: 0, lxv: 0, lz: 0, lzv: 0,
+    yaw: S.yaw, yawTarget: S.yaw, cooldown: rand(0.6, 1.2), scale: 0.55
+  };
+}
+function split() {
+  S.split = { called: false, regroupAt: now + 6 };
+  if (ball.carried) { ball.carried = false; ball.vel.set(rand(-2, 2), 5, rand(-2, 2)); }
+  S.fetch = null;
+  S.scale = S.scaleT = 0.62;
+  for (let i = 0; i < 2; i++) {
+    const a = rand(0, Math.PI * 2);
+    minis.push(makeMini(new V3(Math.cos(a) * rand(3, 5), rand(4, 6.5), Math.sin(a) * rand(2, 4))));
+  }
+  splat(14);
+  sfx.splat();
+  B.dizzy = clamp(B.dizzy + 0.6);
+  B.fear = clamp(B.fear + 0.15);
+  S.surprise = 1;
+  say(pick(["Ow! I'm in pieces!", "Splat!", "Uh oh... bits everywhere!"]), true);
+}
+function merge(m) {
+  scene.remove(m.group, m.shadow);
+  minis.splice(minis.indexOf(m), 1);
+  S.scaleT = Math.min(1, S.scaleT + 0.19);
+  S.qv += 3.5;
+  sfx.blorp();
+  emote("♪");
+  if (!minis.length) {
+    S.split = null;
+    S.scaleT = 1;
+    B.joy = clamp(B.joy + 0.3);
+    B.dizzy = 0;
+    B.fear = 0;
+    S.wave = 1.5;
+    say(pick(["Phew, all back together!", "Much better!"]), true);
+  }
+}
+function nearestMini() {
+  let best = null, bd = Infinity;
+  minis.forEach((m) => {
+    const d = Math.hypot(m.pos.x - S.pos.x, m.pos.z - S.pos.z);
+    if (d < bd) { bd = d; best = m; }
+  });
+  return best && { mini: best, dist: bd };
+}
+function hitMini() {
+  if (!minis.length) return null;
+  raycaster.setFromCamera(ptr.ndc, camera);
+  const hit = raycaster.intersectObjects(minis.map((m) => m.group), true)[0];
+  return hit ? minis.find((m) => hit.object.parent === m.group) : null;
+}
+function pokeMini(m) {
+  m.vel.set(0, 4, 0);
+  m.grounded = false;
+  m.qv -= 3;
+  sfx.poke();
+  emote("♪");
+}
+function updateMinis(dt) {
+  if (!S.split) return;
+  if (!S.split.called && now > S.split.regroupAt) {
+    S.split.called = true;
+    S.wave = 1.5;
+    say(pick(["Come back, bits!", "Regroup!", "Here, little blobs!"]), true);
+  }
+  minis.slice().forEach((m) => {
+    if (!m.grounded) {
+      m.vel.y -= G * dt;
+      m.pos.addScaledVector(m.vel, dt);
+      if (Math.abs(m.pos.x) > ARENA.xMax) { m.pos.x = clamp(m.pos.x, -ARENA.xMax, ARENA.xMax); m.vel.x *= -0.6; }
+      if (m.pos.z < ARENA.zMin || m.pos.z > ARENA.zMax) { m.pos.z = clamp(m.pos.z, ARENA.zMin, ARENA.zMax); m.vel.z *= -0.6; }
+      if (m.pos.y <= 0) {
+        m.pos.y = 0;
+        const impact = -m.vel.y;
+        m.qv -= impact * 0.5;
+        if (impact > 6) m.vel.set(m.vel.x * 0.6, impact * 0.4, m.vel.z * 0.6);
+        else { m.vel.set(0, 0, 0); m.grounded = true; }
+      }
+    }
+    // Once called, hop back to the main body and merge on contact
+    const dx = S.pos.x - m.pos.x, dz = S.pos.z - m.pos.z, d = Math.hypot(dx, dz) || 0.001;
+    if (S.split.called && d < 0.7 * (S.scale + m.scale) && m.pos.y < 0.6 && S.pos.y < 0.6) { merge(m); return; }
+    m.cooldown -= dt;
+    if (m.grounded && m.cooldown <= 0) {
+      let tx = dx / d, tz = dz / d, step = Math.min(d, 1.4), vy = 5;
+      if (!S.split.called) { const a = rand(0, Math.PI * 2); tx = Math.cos(a); tz = Math.sin(a); step = rand(0.2, 0.7); vy = 3.4; }
+      const flight = 2 * vy / G;
+      m.vel.set(tx * step / flight, vy, tz * step / flight);
+      m.grounded = false;
+      m.qv += 2.5;
+      m.cooldown = S.split.called ? rand(0.25, 0.5) : rand(0.8, 1.8);
+      m.yawTarget = faceable(Math.atan2(tx, tz), 0.9, m.pos);
+      sfx.hop(1.4);
+    }
+    const qT = m.grounded ? Math.sin(now * 3 + m.scale * 9) * 0.03 : 0;
+    const lxT = m.grounded ? 0 : clamp(-m.vel.x * 0.03, -0.35, 0.35), lzT = m.grounded ? 0 : clamp(-m.vel.z * 0.03, -0.35, 0.35);
+    [m.q, m.qv] = spring(m.q, m.qv, qT, 260, 8, dt);
+    [m.lx, m.lxv] = spring(m.lx, m.lxv, lxT, 150, 6, dt);
+    [m.lz, m.lzv] = spring(m.lz, m.lzv, lzT, 150, 6, dt);
+    m.q = clamp(m.q, -0.55, 0.7);
+    m.yaw += wrapAngle(m.yawTarget - m.yaw) * Math.min(1, dt * 7);
+    const sxz = compose(m.group, m.pos, m.lx, m.lz, m.q, m.scale, m.yaw);
+    m.shadow.position.set(m.pos.x, 0.005, m.pos.z);
+    m.shadow.scale.setScalar(sxz * m.scale * (1 - clamp(m.pos.y / 6) * 0.45));
+  });
+}
+
+// Semi-implicit spring step
+function spring(x, v, target, k, c, dt) {
+  v += (-k * (x - target) - c * v) * dt;
+  return [x + v * dt, v];
+}
+
+const mShear = new THREE.Matrix4(), mScale = new THREE.Matrix4(), mRot = new THREE.Matrix4();
+// Place a jelly body: position, then lean (shear), squash and size, then turn
+function compose(group, pos, lx, lz, q, scale, yaw) {
+  const sy = 1 + q, sxz = 1 / Math.sqrt(sy);
+  mScale.makeScale(sxz * scale, sy * scale, sxz * scale);
+  mRot.makeRotationY(yaw);
+  mShear.set(1, lx, 0, 0, 0, 1, 0, 0, 0, lz, 1, 0, 0, 0, 0, 1);
+  group.matrix.makeTranslation(pos.x, pos.y, pos.z).multiply(mShear).multiply(mScale).multiply(mRot);
+  group.matrixWorldNeedsUpdate = true;
+  return sxz;
+}
+function jellyStep(dt) {
+  // Squash: crouch before a hop, stretch while held, breathe while idle
+  let qT = 0;
+  if (S.crouch > 0) qT = -0.3;
+  else if (S.held) qT = 0.14 + Math.sin(now * 9) * 0.02;
+  else if (B.asleep) qT = Math.sin(now * 1.3) * 0.05 - 0.05;
+  else if (S.grounded) qT = Math.sin(now * (B.drowsy > 0.45 ? 1.5 : 2.4)) * 0.025;
+  if (S.eating > 0) qT += Math.sin(now * 16) * 0.04;
+  if (S.tickling > 0) qT += Math.sin(now * 28) * 0.07;
+  if (B.fear > 0.5) qT += Math.sin(now * 40) * 0.02;
+
+  // Lean: the top lags behind the motion, then wobbles when it stops
+  let lxT = clamp(-S.vel.x * 0.03, -0.35, 0.35), lzT = clamp(-S.vel.z * 0.03, -0.35, 0.35);
+  if (S.grounded && !S.held) { lxT = 0; lzT = 0; }
+  if (B.dizzy > 0.2) { lxT += Math.cos(now * 4) * 0.12 * B.dizzy; lzT += Math.sin(now * 4) * 0.12 * B.dizzy; }
+  if (S.shake > 0) { S.shake -= dt; lxT += Math.sin(now * 55) * 0.06; }
+  if (S.tickling > 0) { lxT += Math.sin(now * 19) * 0.1; lzT += Math.cos(now * 15) * 0.05; }
+
+  for (let i = 0; i < 2; i++) {
+    const h = dt / 2;
+    [S.q, S.qv] = spring(S.q, S.qv, qT, 260, 8, h);
+    [S.lx, S.lxv] = spring(S.lx, S.lxv, lxT, 150, 6, h);
+    [S.lz, S.lzv] = spring(S.lz, S.lzv, lzT, 150, 6, h);
+  }
+  S.q = clamp(S.q, -0.55, 0.7);
+
+  S.yaw += wrapAngle(S.yawTarget - S.yaw) * Math.min(1, dt * 7);
+
+  // Arms: flail when carried, wave hello, bop when happy, flop when asleep
+  S.wave -= dt;
+  arms.forEach((arm) => {
+    let a = 0.35;
+    if (S.held) a = 2.3 + Math.sin(now * 14 + arm.side) * 0.35;
+    else if (ball.carried) a = 2.75;
+    else if (S.tickling > 0) a = 1.5 + Math.sin(now * 22 + arm.side * 2) * 0.6;
+    else if (B.expr === "scared") a = 2.1 + Math.sin(now * 30) * 0.08;
+    else if (S.wave > 0 && arm.side > 0) a = 2.5 + Math.sin(now * 11) * 0.35;
+    else if (!S.grounded) a = 1.1;
+    else if (S.crouch > 0) a = 0.8;
+    else if (B.asleep) a = 0.12;
+    else if (B.expr === "grumpy" || B.expr === "sad") a = 0.08;
+    else if (B.expr === "excited" || B.expr === "happy" || S.petting > 0) a = 0.55 + Math.sin(now * 7 + arm.side) * 0.18;
+    [arm.a, arm.av] = spring(arm.a, arm.av, a, 90, 9, dt);
+    arm.pivot.rotation.z = arm.side * arm.a;
+  });
+
+  S.scale += (S.scaleT - S.scale) * Math.min(1, dt * 5);
+  const sxz = compose(body, S.pos, S.lx, S.lz, S.q, S.scale, S.yaw);
+
+  const lift = clamp(S.pos.y / 6);
+  slimeShadow.position.set(S.pos.x, 0.005, S.pos.z);
+  slimeShadow.scale.setScalar(sxz * S.scale * (1 - lift * 0.45));
+  slimeShadow.material.opacity = 1 - lift * 0.6;
+
+  // Colour follows the mood, gently
+  const tint = B.expr === "grumpy" ? COLORS.grumpy
+    : B.expr === "scared" ? COLORS.scared
+    : B.asleep || B.drowsy > 0.45 ? COLORS.sleepy
+    : B.joy > 0.62 || S.petting > 0 ? COLORS.happy : COLORS.base;
+  jellyMat.color.lerp(tint, Math.min(1, dt * 2));
+}
+
+/* ---------- Eyes: where to look, and blinking ---------- */
+function faceStep(dt) {
+  // Pick something to look at
+  const food = nearestSnack();
+  if (S.held) S.look.copy(camera.position);
+  else if (food && !B.asleep) S.look.copy(food.snack.pos);
+  else if (ball.active && !ball.carried && (ball.held || ball.fresh || S.fetch)) S.look.copy(ball.pos);
+  else if (pointerActive()) S.look.copy(ptr.ground);
+  else {
+    S.lookTimer -= dt;
+    if (S.lookTimer <= 0) {
+      S.lookTimer = rand(1.5, 4);
+      if (Math.random() < 0.5) S.look.copy(camera.position);
+      else S.look.set(S.pos.x + rand(-4, 4), rand(0, 2), S.pos.z + rand(-3, 3));
+    }
+  }
+  const eye = new V3(S.pos.x, S.pos.y + SIZE * 0.6, S.pos.z);
+  const d = S.look.clone().sub(eye);
+  const local = d.clone().applyAxisAngle(new V3(0, 1, 0), -S.yaw);
+  const len = d.length() || 1;
+  const gxRaw = local.x / len, gyRaw = d.y / len;
+  S.gaze = { x: clamp(gxRaw * 2.2, -1, 1), y: clamp(-gyRaw * 2.2, -1, 1) };
+
+  // Turn to face what it's watching (when sitting still)
+  if (S.grounded && S.crouch <= 0 && !S.held && !B.asleep) {
+    S.yawTarget = faceable(Math.atan2(S.look.x - S.pos.x, S.look.z - S.pos.z), 0.6);
+  }
+
+  // Blink every few seconds, sometimes twice
+  S.blinkT -= dt;
+  if (S.blinkT <= 0) {
+    S.blink = 0.12;
+    S.blinkT = Math.random() < 0.2 ? 0.25 : rand(2, 5.5);
+  }
+  S.blink -= dt;
+  S.surprise -= dt;
+  S.yawn -= dt;
+  S.eating -= dt;
+
+  const f = B.asleep ? (Math.sin(now * 1.3) > 0 ? 1 : 0) : Math.floor(now * 7) % 2;
+  drawFace(B.expr, S.gaze, S.blink > 0, f);
+}
+
+/* ==========================================================================
+   HUD
+   ========================================================================== */
+const hint = document.getElementById("hint");
+const brainEl = document.getElementById("brain");
+const brainBtn = document.getElementById("brain-btn");
+const soundBtn = document.getElementById("sound-btn");
+const doingEl = document.getElementById("doing");
+const meters = [...document.querySelectorAll("[data-m]")];
+let hudTimer = 0;
+
+function setBrain(open) {
+  brainEl.hidden = !open;
+  brainBtn.setAttribute("aria-expanded", String(open));
+}
+let brainPref = null;
+try { brainPref = localStorage.getItem("slime-brain"); } catch (e) {}
+setBrain(brainPref ? brainPref === "1" : window.innerWidth > 700);
+brainBtn.addEventListener("click", () => {
+  setBrain(brainEl.hidden);
+  try { localStorage.setItem("slime-brain", brainEl.hidden ? "0" : "1"); } catch (e) {}
+});
+
+soundBtn.addEventListener("click", () => {
+  sfx.ensure();
+  sfx.on = !sfx.on;
+  soundBtn.setAttribute("aria-pressed", String(sfx.on));
+});
+document.getElementById("snack-btn").addEventListener("click", () => {
+  sfx.ensure();
+  dropSnack(S.pos.x + rand(-2.5, 2.5), S.pos.z + rand(-1.5, 1.5));
+});
+document.getElementById("ball-btn").addEventListener("click", () => {
+  sfx.ensure();
+  spawnBall();
+});
+const knownDays = Math.floor((Date.now() - firstSeen) / 864e5);
+document.getElementById("visits").textContent = visits === 1 ? "First visit. Nice to meet you!"
+  : "Visit " + visits + " · friends for " + (knownDays ? knownDays + (knownDays === 1 ? " day" : " days") : "less than a day");
+let memoryTimer = 5;
+
+function hud(dt) {
+  if (now > 14) hint.classList.add("faded");
+  if (bubble.classList.contains("show")) {
+    const at = toScreen(headPoint());
+    bubble.style.left = at.x + "px";
+    bubble.style.top = at.y - 8 + "px";
+    if (now > bubbleUntil) bubble.classList.remove("show");
+  }
+
+  const leading = pointerActive() && !S.held;
+  marker.position.set(ptr.ground.x, 0.01, ptr.ground.z);
+  marker.material.opacity += ((leading ? 0.45 : 0) - marker.material.opacity) * Math.min(1, dt * 8);
+
+  memoryTimer -= dt;
+  if (memoryTimer <= 0) { memoryTimer = 5; remember(); }
+
+  hudTimer -= dt;
+  if (hudTimer > 0 || brainEl.hidden) return;
+  hudTimer = 0.2;
+  doingEl.textContent = B.doing;
+  meters.forEach((m) => { m.style.width = Math.round(B[m.dataset.m] * 100) + "%"; });
+}
+
+/* ==========================================================================
+   Loop
+   ========================================================================== */
+const clock = new THREE.Clock();
+let landed = false;
+window.slime = { body: S, brain: B, ball, camera }; // for poking around in the console
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 1 / 30);
+  now += dt;
+  think(dt);
+  physics(dt);
+  if (!landed && S.grounded) { landed = true; greet(); }
+  jellyStep(dt);
+  faceStep(dt);
+  updateSnacks(dt);
+  updateDrops(dt);
+  updateMinis(dt);
+  updateBall(dt);
+  bobBillows();
+  hud(dt);
+  renderer.render(scene, camera);
+}
+frame();
+</script>
+</body>
+</html>

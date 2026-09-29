@@ -26,6 +26,53 @@
  */
 window.PROJECTS = [
   {
+    id: "slime-buddy",
+    title: "Slime Buddy",
+    description: "A bouncy 3D slime with a mind of its own. Lead it around, carry it, poke it, pet it and feed it, and watch how it feels about all that.",
+    category: "experiment",
+    url: "projects/slime-buddy/index.html",
+    embed: true,
+    image: "projects/slime-buddy/thumb.png",
+    emoji: "🟩",
+    tags: ["Three.js", "WebGL", "Web Audio"],
+    status: "New",
+    details: {
+      intro: [
+        "Slime Buddy is somewhere between a Minecraft slime and a kawaii jelly blob: a glossy gumdrop of periwinkle, lilac and rose jelly with a soft core, stubby arms and big sparkly eyes, bouncing around on a bank of pastel clouds.",
+        "It has a small brain. Needs for energy, food and company drift over time, and feelings like joy, curiosity, grumpiness, fright and dizziness rise and fade with what you do. Together they decide what it does next and the face it pulls. Open the Brain panel to watch it think."
+      ],
+      howToTitle: "How to play",
+      howTo: [
+        "Move your cursor, or press and drag a finger on the ground, and it hops after you. Its eyes follow wherever you point.",
+        "Drag it to pick it up, then let go to drop it or fling it to throw it. It bounces, but high places scare it and shaking makes it dizzy.",
+        "Drop it from high enough and it splits into three wobbly pieces. Give them a few seconds and they hop back together.",
+        "Tap it to poke it. A couple of pokes make it giggle; too many make it grumpy.",
+        "Stroke it slowly with the mouse, or rest a finger on it, to pet it. Wiggle fast over it, or tap it in a quick flurry, to tickle it. Just don't overdo it.",
+        "Press Ball, then grab the ball and fling it. It chases it, carries it back over its head and begs you to go again. It notices if you only pretend to throw.",
+        "Tap the ground to drop a star candy. Watch it dissolve inside the jelly.",
+        "Leave it alone and it gets drowsy, yawns, and falls asleep. Poke it to wake it, though it may be cranky about it."
+      ],
+      featuresTitle: "Moods",
+      features: [
+        { name: "Happy", text: "Bigger, bouncier hops and a wide smile." },
+        { name: "Curious", text: "Something new caught its eye." },
+        { name: "Grumpy", text: "Poked once too often. It sulks away from you." },
+        { name: "Sleepy", text: "Ignored for a while. Heavy eyelids, then a nap." },
+        { name: "Dizzy", text: "Shaken or thrown too hard. It staggers about, or splits into pieces." },
+        { name: "Lonely", text: "Missing you. It hops to the front to look for you." },
+        { name: "Tickled", text: "Eyes squeezed shut, giggling, arms everywhere." },
+        { name: "Playful", text: "Mid-game of fetch, and hoping it never ends." }
+      ],
+      highlights: [
+        "Squash and stretch jelly physics: it crouches before a hop, wobbles when it lands and leans as it moves",
+        "Blinks, glances around, waves hello and flails its arms when you pick it up",
+        "Hand-drawn expressions for every mood, from sparkly-eyed joy to spiral-eyed dizziness",
+        "Remembers you between visits: how often you come, how long you were away, and how close you two are",
+        "Synthesised boings, squelches, giggles and munches"
+      ]
+    }
+  },
+  {
     id: "surface-tension",
     title: "Surface Tension",
     description: "Tap and swipe to pop bubbles before they break the surface. Chain pops, dodge ink and dive deeper across five modes.",

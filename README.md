@@ -40,6 +40,7 @@ worker/             optional "Ask the lab" chat backend (see worker/README.md)
 
 | Project | Type | Link |
 | --- | --- | --- |
+| Slime Buddy | Experiment | [Play](https://spec-ups.github.io/projects/slime-buddy/index.html) |
 | Surface Tension | Game | [Play](https://spec-ups.github.io/projects/surface-tension/index.html) |
 
 ## Adding a project
