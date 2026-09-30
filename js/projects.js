@@ -39,7 +39,7 @@ window.PROJECTS = [
     background: "slimes",
     details: {
       intro: [
-        "Slime Buddy is somewhere between a Minecraft slime and a kawaii jelly blob: a glossy gumdrop of periwinkle, lilac and rose jelly with a soft core, stubby arms and big sparkly eyes, bouncing around on a bank of pastel clouds.",
+        "Slime Buddy is somewhere between a Minecraft slime and a kawaii jelly blob: a glossy gumdrop of periwinkle, lilac and rose jelly with a soft core, stubby arms and big sparkly eyes, bouncing around a pool of lilac jelly that ripples wherever it lands.",
         "It has a small brain. Needs for energy, food and company drift over time, and feelings like joy, curiosity, grumpiness, fright and dizziness rise and fade with what you do. Together they decide what it does next and the face it pulls. Open the Brain panel to watch it think."
       ],
       howToTitle: "How to play",
