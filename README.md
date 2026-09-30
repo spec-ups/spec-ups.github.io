@@ -11,7 +11,8 @@ Plain HTML/CSS/JS with no build step, published straight from `main` by GitHub P
 - Rorschach-style inkblots scattered down every page: generated fresh on every visit, mirrored,
   and slowly seeping and shifting, carried on unbroken as you move between pages
 - Project pages can swap the inkblots for their own background: Surface Tension has
-  rising bubbles you can tap or swipe to pop (`background` in `js/projects.js`)
+  rising bubbles you can tap or swipe to pop, and Slime Buddy has mini slimes falling from
+  the sky that you can tap to bounce (`background` in `js/projects.js`)
 - A headline that cycles through "games", "apps", "experiments" and more
 - Project cards that tilt toward the cursor, with a "Play here" button that opens the project
   in a pop-up without leaving the site
@@ -31,7 +32,8 @@ js/main.js          shared: theme, cards, player pop-up, effects, chat
 js/home.js          home page: headline, stats, grid
 js/project.js       project page rendering
 js/inkblot.js       animated Rorschach inkblots scattered down every page
-js/bubbles.js       easter-egg bubble burst
+js/bubbles.js       easter-egg bubble burst, and the poppable bubble background
+js/slimes.js        falling mini-slime background
 projects/           each self-contained project in its own folder
 worker/             optional "Ask the lab" chat backend (see worker/README.md)
 ```

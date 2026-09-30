@@ -13,8 +13,8 @@
  *   emoji       - shown on the gradient thumbnail when there is no image
  *   tags        - short labels (tech, model, etc.)
  *   status      - optional badge, e.g. "New", "WIP"
- *   background  - optional project page background: "bubbles" for poppable bubbles
- *                 instead of the inkblots
+ *   background  - optional project page background instead of the inkblots:
+ *                 "bubbles" (poppable bubbles) or "slimes" (mini slimes falling from the sky)
  *   details     - optional content for the project page:
  *       intro         - list of paragraphs
  *       howTo         - list of steps ("How to play" / "How to use")
@@ -36,6 +36,7 @@ window.PROJECTS = [
     emoji: "🟩",
     tags: ["Three.js", "WebGL", "Web Audio"],
     status: "New",
+    background: "slimes",
     details: {
       intro: [
         "Slime Buddy is somewhere between a Minecraft slime and a kawaii jelly blob: a glossy gumdrop of periwinkle, lilac and rose jelly with a soft core, stubby arms and big sparkly eyes, bouncing around on a bank of pastel clouds.",

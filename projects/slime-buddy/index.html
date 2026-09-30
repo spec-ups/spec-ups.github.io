@@ -744,7 +744,74 @@ const sfx = (() => {
     s.start(t);
     s.stop(t + 0.16);
   }
+
+  // Babble: a made-up voice, one blip per syllable of the line. One oscillator glides
+  // from syllable to syllable through a shifting vowel filter, so it sounds like a
+  // voice rather than beeps. Mood sets the pitch and pace; questions rise at the end.
+  const VOICES = {
+    happy: { base: 470, rate: 0.085, vol: 0.1 },
+    grumpy: { base: 230, rate: 0.11, vol: 0.08, type: "sawtooth" },
+    sleepy: { base: 270, rate: 0.15, vol: 0.06 },
+    scared: { base: 520, rate: 0.075, vol: 0.09, wobble: 22 },
+    sad: { base: 300, rate: 0.13, vol: 0.07 },
+    normal: { base: 380, rate: 0.1, vol: 0.09 }
+  };
+  const VOICE_OF = {
+    happy: "happy", excited: "happy", bliss: "happy", tickled: "happy", munch: "happy",
+    grumpy: "grumpy", sleepy: "sleepy", yawn: "sleepy", asleep: "sleepy",
+    scared: "scared", surprised: "scared", sad: "sad", dizzy: "sad"
+  };
+  const VOWELS = [500, 650, 900, 1200, 1700, 2300];
+  let voice = null;
+  function babble(text, expr) {
+    if (!on || !ctx) return;
+    if (voice) { try { voice.stop(); } catch (e) {} }
+    const words = text.toLowerCase().match(/[a-z']+/g);
+    if (!words) return;
+    const v = VOICES[VOICE_OF[expr] || "normal"];
+    const question = /\?\s*$/.test(text), exclaim = /!\s*$/.test(text);
+    const t0 = ctx.currentTime + 0.02;
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), dry = ctx.createGain(), g = ctx.createGain();
+    o.type = v.type || "triangle";
+    f.type = "bandpass";
+    f.Q.value = 3;
+    dry.gain.value = 0.35;
+    g.gain.setValueAtTime(0.0001, t0);
+    let t = t0, count = 0;
+    words.forEach((w, wi) => {
+      const syllables = Math.max(1, (w.match(/[aeiouy]+/g) || []).length);
+      for (let i = 0; i < syllables && count < 12; i++, count++) {
+        const last = wi === words.length - 1 && i === syllables - 1;
+        const dur = v.rate * (0.75 + Math.random() * 0.6);
+        let pitch = v.base * (0.85 + Math.random() * 0.35) * (count === 0 ? 1.05 : 1);
+        if (last && exclaim) pitch *= 1.15;
+        o.frequency.setTargetAtTime(pitch, t, 0.015);
+        if (last && question) o.frequency.setTargetAtTime(pitch * 1.4, t + dur * 0.3, 0.05);
+        f.frequency.setTargetAtTime(pick(VOWELS), t, 0.02);
+        g.gain.setTargetAtTime(v.vol * (exclaim ? 1.2 : 1) * (0.8 + Math.random() * 0.3), t, 0.012);
+        g.gain.setTargetAtTime(0.0001, t + dur * 0.7, 0.018);
+        t += dur;
+      }
+      t += 0.04; // a breath between words
+    });
+    if (v.wobble) {
+      const lfo = ctx.createOscillator(), depth = ctx.createGain();
+      lfo.frequency.value = 9;
+      depth.gain.value = v.wobble;
+      lfo.connect(depth).connect(o.frequency);
+      lfo.start(t0);
+      lfo.stop(t + 0.1);
+    }
+    o.connect(f).connect(g);
+    o.connect(dry).connect(g);
+    g.connect(ctx.destination);
+    o.start(t0);
+    o.stop(t + 0.15);
+    voice = o;
+  }
+
   return {
+    babble,
     ensure,
     get on() { return on; },
     set on(v) { on = v; },
@@ -853,6 +920,7 @@ function say(text, force) {
   bubble.textContent = text;
   bubble.classList.add("show");
   bubbleUntil = now + 2.2;
+  sfx.babble(text, B.expr);
 }
 
 function toScreen(v) {

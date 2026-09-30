@@ -32,10 +32,12 @@
   }
 
   // A project can swap the inkblots for its own background
-  if (p.background === "bubbles" && window.LabBubbles) {
+  var backgrounds = { bubbles: window.LabBubbles, slimes: window.LabSlimes };
+  var background = backgrounds[p.background];
+  if (background) {
     var ink = document.querySelector("[data-inkblots]");
     if (ink) ink.remove();
-    window.LabBubbles.field();
+    background.field();
   }
 
   var d = p.details || {};
